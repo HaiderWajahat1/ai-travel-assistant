@@ -1,0 +1,3 @@
+gemma_api_key: "your_key_here"
+searxng_endpoint: "https://searx.be/search"
+default_timeout: 10
