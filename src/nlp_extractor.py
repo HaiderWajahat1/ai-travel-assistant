@@ -2,6 +2,7 @@ import re
 import spacy
 from typing import Dict, Optional
 from rapidfuzz import process
+
 nlp = spacy.load("en_core_web_sm")
 
 def extract_location_info(text: str) -> Dict[str, Optional[str]]:
@@ -9,8 +10,8 @@ def extract_location_info(text: str) -> Dict[str, Optional[str]]:
         "origin": None,
         "destination": None,
         "flight_number": None,
-        "departure_time": None,
-        "departure_date": None
+        "arrival_time": None,
+        "arrival_date": None
     }
 
     # Step 1: Normalize lines
@@ -37,19 +38,31 @@ def extract_location_info(text: str) -> Dict[str, Optional[str]]:
     if not data["destination"] and len(locations) >= 2:
         data["destination"] = locations[1]
 
-    # Step 4: Flight number
+    # Step 4: Flight number (e.g., F 0575 or EK702)
     flight_match = re.search(r"\b([A-Z]{1,2}\s?\d{3,5})\b", text)
     if flight_match:
         data["flight_number"] = flight_match.group().replace(" ", "")
 
-    # Step 5: Time
-    time_match = re.search(r"\b\d{2}[:*]\d{2}\b", text)
-    if time_match:
-        data["departure_time"] = time_match.group().replace("*", ":")
+    # Step 5: Arrival time — try to extract from lines containing "arrival"
+    arrival_time = None
+    for line in lines:
+        if "arrival" in line.lower():
+            match = re.search(r"\b\d{2}[:*]?\d{2}\b", line)
+            if match:
+                arrival_time = match.group().replace("*", ":")
+                break
 
-    # Step 6: Date (supports 09JUN or 30 JUN 2025)
-    date_match = re.search(r"\b\d{1,2}\s?[A-Z]{3}(?:\s?\d{4})?\b", text, re.IGNORECASE)
-    if date_match:
-        data["departure_date"] = date_match.group().upper()
+    # Fallback: use last time in the whole text
+    if not arrival_time:
+        time_matches = re.findall(r"\b\d{2}[:*]?\d{2}\b", text)
+        if time_matches:
+            arrival_time = time_matches[-1].replace("*", ":")
+
+    data["arrival_time"] = arrival_time
+
+    # Step 6: Arrival date — take the LAST valid date found
+    date_matches = re.findall(r"\b\d{1,2}\s?[A-Z]{3}(?:\s?\d{4})?\b", text.upper())
+    if date_matches:
+        data["arrival_date"] = date_matches[-1].replace(" ", "")
 
     return data
