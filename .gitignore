@@ -10,6 +10,9 @@ venv/
 # Jupyter Notebook
 .ipynb_checkpoints
 
+# Ignore test images
+test_images/
+
 # Logs
 *.log
 
