@@ -47,9 +47,8 @@ def call_gemma(prompt: str) -> dict:
             return json.loads(content)
         except json.JSONDecodeError:
             return {
-                "error": "Gemma response was not valid JSON",
-                "raw_output": content
+                "output": content
             }
-
+        
     except Exception as e:
         return {"error": f"Gemma call failed: {str(e)}"}
