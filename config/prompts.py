@@ -108,72 +108,87 @@ Avoid skipping any section, especially car rentals.
 """
 
 
+def build_live_itinerary_prompt(destination: str, arrival_time: str, arrival_date: str, search_results: list) -> str:
+    prompt = f"""
+You are a travel assistant AI helping a traveler plan their arrival-day experience.
 
-def build_live_itinerary_prompt(destination: str, arrival_date: str, arrival_time: str, live_results: list):
-    # Format the SearxNG search results into readable bullet points
-    search_context = ""
-    for r in live_results:
-        title = r.get("title", "")
-        url = r.get("url", "")
-        snippet = r.get("content", "")
-        search_context += f"- **{title}**\n  URL: {url}\n  Summary: {snippet}\n\n"
+The traveler is landing in **{destination}** on **{arrival_date}** at **{arrival_time}**.
 
-    return f"""
-SYSTEM:
-
-You are a highly intelligent and factual travel planner.
-
-A traveler is landing in **{destination}** on **{arrival_date}** at **{arrival_time}**.
-
-You’ve been provided with real-time search results from a search engine (like Google or Bing) about this destination. This data includes up-to-date recommendations for places to eat, stay, and rent a car.
-
-Here are the latest search results:
-{search_context.strip()}
-
-Based on this information, create the following:
+You are given a set of **web search results** related to this destination. Use these results to generate your response.
 
 ---
 
-🍽️ **RESTAURANT RECOMMENDATIONS**
-- 3 Cheap ($)
-- 3 Mid-range ($$)
-- 3 Luxury ($$$)
-- For each:  
-  - Name  
-  - Cuisine  
-  - Approx. price/person  
-  - Opening hours (if found)  
-  - Why it’s recommended
+### 🧠 Hybrid Logic:
+
+- **Step 1:** Search the provided web results for restaurants, hotels, and rental car services.
+- **Step 2:** If any category (e.g. Cheap restaurants) has no useful data, use your internal knowledge as a fallback — but clearly mark those entries with `Fallback` so the user knows they came from your knowledge base, not the web.
+- **Step 3:** Structure the final output as a clean Markdown-formatted itinerary with 3 recommendations per category, if possible.
 
 ---
 
-🏨 **HOTEL RECOMMENDATIONS**
-- 3 Budget
-- 3 Mid-range
-- 3 Luxury
-- For each:
-  - Name
-  - Price/night
-  - Location or distance from airport
-  - Amenities or features (if available)
+### 📋 Output Instructions:
+
+1. **Restaurants**
+   - Categories: Cheap ($), Mid-Range ($$), Luxury ($$$)
+   - For each: Give name, cuisine, approx. price, and why it’s recommended.
+
+2. **Hotels**
+   - Categories: Budget, Mid-Range, Luxury
+   - For each: Give name, price/night, location, and amenities.
+
+3. **Rental Cars**
+   - Give 2–3 options: Brand, types of cars, booking method, pickup info.
+
+✅ Clearly label whether each recommendation is:
+- `From Search Result X`
+- or `Fallback (LLM)`
 
 ---
 
-🚗 **RENTAL CAR OPTIONS**
-- 3–5 car rental companies near **{destination} Airport**
-- For each:
-  - Company name
-  - Types of cars offered (Compact, SUV, Luxury, etc.)
-  - Price range
-  - Booking method (Online/In-person)
-  - Hours of operation
-
----
-
-🧠 INSTRUCTIONS:
-- Use the search results as inspiration, but it’s okay to fill in missing fields based on common knowledge of the destination.
-- Be concise and structured. Use bullet points and section headings.
-- Prioritize accuracy over creativity.
-
-Return a complete, well-formatted itinerary in plain English.
+🔍 **Search Results**:
 """
+    for i, result in enumerate(search_results):
+        prompt += (
+            f"\n**Result {i+1}**\n"
+            f"- Title: {result.get('title', '').strip()}\n"
+            f"- URL: {result.get('url', '').strip()}\n"
+            f"- Snippet: {result.get('content', '').strip()}\n"
+        )
+
+    prompt += """
+
+---
+
+Now, using the **above search results first**, and your own knowledge *only when necessary*, generate a well-structured Markdown itinerary. Do not hallucinate URLs or make up fake brands. Always mention whether each suggestion came from `Search Result X` or is a `Fallback (LLM)`.
+
+"""
+    return prompt
+
+
+
+
+
+
+def build_fallback_prompt(destination: str, arrival_time: str, arrival_date: str) -> str:
+    return f"""
+You are a helpful travel assistant AI helping a traveler plan their arrival-day experience.
+
+They are landing in **{destination}** at **{arrival_time}** on **{arrival_date}**.
+
+Since no live search results were found, you should rely on your general knowledge of the location.
+
+Please provide:
+1. Three restaurant recommendations each in the **Cheap ($), Mid-Range ($$), and Luxury ($$$)** categories.
+2. Three hotel recommendations in each of the **Budget, Mid-Range, and Luxury** categories.
+3. Two or three car rental options near the airport.
+
+For each recommendation, include:
+- Name
+- Cuisine/Type
+- Approx. price range (if possible)
+- Location or distance (general)
+- Why it’s recommended
+
+Present everything in a clean, structured **Markdown format**, using headings and bullet points. Be detailed but avoid hallucinating facts you’re unsure of. Label all sections clearly and logically.
+"""
+
