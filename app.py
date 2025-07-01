@@ -1,4 +1,5 @@
 from fastapi import FastAPI, UploadFile, File, HTTPException
+from fastapi.responses import JSONResponse
 from pydantic import BaseModel
 from src.ocr_engine import extract_text_via_ocr_space
 from src.nlp_extractor import extract_location_info
@@ -35,7 +36,7 @@ async def analyze_image(file: UploadFile = File(...)):
 def extract_info_from_text(input: TextInput):
     try:
         result = extract_location_info(input.raw_text)
-        return {"structured_info": result}
+        return JSONResponse(content={"structured_info": result})
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
@@ -43,5 +44,5 @@ def extract_info_from_text(input: TextInput):
 async def extract_text(file: UploadFile = File(...)):
     text = await extract_text_via_ocr_space(file)
     if text:
-        return {"extracted_text": text}
+        return JSONResponse(content={"extracted_text": text})
     raise HTTPException(status_code=500, detail="OCR failed.")
