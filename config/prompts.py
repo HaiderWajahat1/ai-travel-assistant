@@ -106,3 +106,74 @@ Your task is to build an itinerary for their arrival day that includes:
 Respond in clear, well-structured bullet points with headings for each section.
 Avoid skipping any section, especially car rentals.
 """
+
+
+
+def build_live_itinerary_prompt(destination: str, arrival_date: str, arrival_time: str, live_results: list):
+    # Format the SearxNG search results into readable bullet points
+    search_context = ""
+    for r in live_results:
+        title = r.get("title", "")
+        url = r.get("url", "")
+        snippet = r.get("content", "")
+        search_context += f"- **{title}**\n  URL: {url}\n  Summary: {snippet}\n\n"
+
+    return f"""
+SYSTEM:
+
+You are a highly intelligent and factual travel planner.
+
+A traveler is landing in **{destination}** on **{arrival_date}** at **{arrival_time}**.
+
+You’ve been provided with real-time search results from a search engine (like Google or Bing) about this destination. This data includes up-to-date recommendations for places to eat, stay, and rent a car.
+
+Here are the latest search results:
+{search_context.strip()}
+
+Based on this information, create the following:
+
+---
+
+🍽️ **RESTAURANT RECOMMENDATIONS**
+- 3 Cheap ($)
+- 3 Mid-range ($$)
+- 3 Luxury ($$$)
+- For each:  
+  - Name  
+  - Cuisine  
+  - Approx. price/person  
+  - Opening hours (if found)  
+  - Why it’s recommended
+
+---
+
+🏨 **HOTEL RECOMMENDATIONS**
+- 3 Budget
+- 3 Mid-range
+- 3 Luxury
+- For each:
+  - Name
+  - Price/night
+  - Location or distance from airport
+  - Amenities or features (if available)
+
+---
+
+🚗 **RENTAL CAR OPTIONS**
+- 3–5 car rental companies near **{destination} Airport**
+- For each:
+  - Company name
+  - Types of cars offered (Compact, SUV, Luxury, etc.)
+  - Price range
+  - Booking method (Online/In-person)
+  - Hours of operation
+
+---
+
+🧠 INSTRUCTIONS:
+- Use the search results as inspiration, but it’s okay to fill in missing fields based on common knowledge of the destination.
+- Be concise and structured. Use bullet points and section headings.
+- Prioritize accuracy over creativity.
+
+Return a complete, well-formatted itinerary in plain English.
+"""
