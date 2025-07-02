@@ -12,7 +12,7 @@ if uploaded:
     if st.button("Generate Itinerary"):
         files = {"file": (uploaded.name, uploaded.getvalue(), uploaded.type)}
         with st.spinner("🧭 Processing..."):
-            resp = requests.post("https://your-backend-username.onrender.com/process", files=files)
+            resp = requests.post(https://ai-travel-assistant-1-f396.onrender.com, files=files)
 
         if resp.ok:
             data = resp.json()

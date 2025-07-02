@@ -320,7 +320,8 @@ You are given a set of **web search results** related to this destination. Use t
         for tier in ["Cheap", "Mid-Range", "Luxury"]:
             prompt += f"\n#### {tier}\n"
             for name in fallback[tier]:
-                google_link = f"https://www.google.com/search?q={name.replace(' ', '+')}+{destination}+restaurant"
+                google_link = f"https://www.google.com/search?q={destination.replace(' ', '+')}+restaurant"
+
                 prompt += (
                     f"- **{name}** `Fallback (LLM)`\n"
                     f"  _(No price info available)_\n"
@@ -356,7 +357,7 @@ You are given a set of **web search results** related to this destination. Use t
         for tier in ["Cheap", "Mid-Range", "Luxury"]:
             prompt += f"\n#### {tier}\n"
             for name in fallback[tier]:
-                google_link = f"https://www.google.com/search?q={name.replace(' ', '+')}+{destination}+hotel"
+                google_link = f"https://www.google.com/search?q={destination.replace(' ', '+')}+hotel"
                 prompt += (
                     f"- **{name}** `Fallback (LLM)`\n"
                     f"  _(No price info available)_\n"
@@ -377,7 +378,7 @@ You are given a set of **web search results** related to this destination. Use t
             "Hertz", "Avis", "Enterprise"
         ]
         for name in fallback_rentals:
-            google_link = f"https://www.google.com/search?q={name.replace(' ', '+')}+{destination}+car+rental"
+            google_link = f"https://www.google.com/search?q={destination.replace(' ', '+')}+car+rental"
             prompt += (
                 f"- **{name}** `Fallback (LLM)`\n"
                 f"  [Website]({google_link})\n"
@@ -417,13 +418,13 @@ For each restaurant, give:
 - Name
 - Brief description (type of food/cuisine, location or neighborhood, ambiance)
 - **Estimated Price:** ($, $$, or $$$)
-- A [Google Search link](https://www.google.com/search?q={name}+{destination}+restaurant) for the user to find more info (do NOT make up a direct website)
+- A [Google Search link](https://www.google.com/search?q={destination.replace(' ', '+')}+restaurant) for the user to find more info (do NOT make up a direct website)
 - Example:
 
     - **Le Meurice**  
       Elegant fine dining at a Michelin-starred hotel restaurant in the 1st arrondissement.  
       **Estimated Price:** $$$  
-      [Google Search](https://www.google.com/search?q=Le+Meurice+{destination}+restaurant)
+      [Google Search](https://www.google.com/search?q=Le+Meurice+{destination.replace(' ', '+')}+restaurant)
 
 ---
 
@@ -438,13 +439,13 @@ For each hotel, give:
 - Name
 - Brief description (type, location/neighborhood, amenities, style)
 - **Estimated Price:** ($, $$, or $$$)
-- A [Google Search link](https://www.google.com/search?q={name}+{destination}+hotel)
+- A [Google Search link](https://www.google.com/search?q={destination.replace(' ', '+')}+hotel)
 - Example:
 
     - **The Jane Hotel**  
       Historic budget hotel in the West Village, known for its compact rooms and vintage charm.  
       **Estimated Price:** $  
-      [Google Search](https://www.google.com/search?q=The+Jane+Hotel+{destination}+hotel)
+      [Google Search](https://www.google.com/search?q=The+Jane+Hotel+{destination.replace(' ', '+')}+hotel)
 
 ---
 
@@ -454,13 +455,13 @@ For each hotel, give:
 - Name
 - General location (e.g., airport/central/train station)
 - Types of vehicles available (if known)
-- [Google Search link](https://www.google.com/search?q={name}+car+rental+{destination})
+- [Google Search link](https://www.google.com/search?q=car+rental+{destination.replace(' ', '+')})
 
 Example:
 
 - **Hertz**  
   Available at the airport and central locations, offers a variety of vehicles from economy to SUV.  
-  [Google Search](https://www.google.com/search?q=Hertz+car+rental+{destination})
+  [Google Search](https://www.google.com/search?q=Hertz+car+rental+{destination.replace(' ', '+')})
 
 ---
 
