@@ -12,11 +12,12 @@ if uploaded:
     if st.button("Generate Itinerary"):
         files = {"file": (uploaded.name, uploaded.getvalue(), uploaded.type)}
         with st.spinner("🧭 Processing..."):
-            resp = requests.post("http://localhost:8000/process", files=files)
+            resp = requests.post("https://your-backend-username.onrender.com/process", files=files)
+
         if resp.ok:
             data = resp.json()
             st.success("✅ Itinerary generated!")
             st.header("✈️ Trip Summary")
             st.json(data, expanded=False)
-        else:
-            st.error(f"Error: {resp.status_code} – {resp.text}")
+        else:   
+            st.error(f"Error: {resp.status_code} - {resp.text}")
