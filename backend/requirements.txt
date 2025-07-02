@@ -1,4 +1,5 @@
 fastapi
 uvicorn
 requests
+httpx
 # any OCR/NLP libs you use (e.g., pytesseract, spacy, etc.)
