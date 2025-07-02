@@ -28,3 +28,6 @@ test_images/
 # Mac/Windows system
 .DS_Store
 Thumbs.db
+
+requirements-mainpc.txt
+
