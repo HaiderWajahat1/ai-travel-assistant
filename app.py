@@ -64,8 +64,8 @@ async def display_itinerary(file: UploadFile = File(...)):
             raise HTTPException(status_code=400, detail="Destination not found in extracted data")
 
         # Step 3: Web search
-        restaurants = search_searx(f"best restaurants in {destination}", tag="restaurant", max_results=4)
-        hotels = search_searx(f"best hotels in {destination}", tag="hotel", max_results=4)
+        restaurants = search_searx(f"best restaurants in {destination}", tag="restaurant", max_results=6)
+        hotels = search_searx(f"best hotels in {destination}", tag="hotel", max_results=6)
         rentals = search_searx(f"car rentals in {destination}", tag="rental", max_results=4)
 
         search_results = restaurants + hotels + rentals

@@ -21,10 +21,10 @@ def call_gemma(prompt: str) -> dict:
     payload = {
         "contents": [{"role": "user", "parts": [{"text": prompt}]}],
         "generationConfig": {
-            "temperature": 1,
+            "temperature": 0.4,
             "topK": 32,
             "topP": 1,
-            "maxOutputTokens": 2048,
+            "maxOutputTokens": 4000,
         }
     }
 
