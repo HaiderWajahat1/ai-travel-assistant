@@ -9,7 +9,8 @@ load_dotenv()
 
 # Get API key and URL for Gemma 3 27B
 GEMMA_API_KEY = os.getenv("GEMMA_API_KEY")
-GEMMA_API_URL = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent"
+GEMMA_API_URL = "https://generativelanguage.googleapis.com/v1beta/models/gemma-3-27b-it:generateContent"
+#GEMMA_API_URL = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent"
 
 def call_gemma(prompt: str) -> dict:
     headers = {
@@ -20,10 +21,10 @@ def call_gemma(prompt: str) -> dict:
     payload = {
         "contents": [{"role": "user", "parts": [{"text": prompt}]}],
         "generationConfig": {
-            "temperature": 0.4,
+            "temperature": 1,
             "topK": 32,
             "topP": 1,
-            "maxOutputTokens": 1024
+            "maxOutputTokens": 2048,
         }
     }
 

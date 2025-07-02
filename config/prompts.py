@@ -1,18 +1,5 @@
 # Placeholder for Gemma prompt templates
 
-DESTINATION_PROMPT = """
-Given the following POIs and details for {location}, create a personalized travel itinerary:
-{details}
-"""
-
-LAYOVER_PROMPT = """
-You have a layover at {airport} for {duration} hours. Given the following places:
-{pois}
-Suggest how the traveler can make the best use of this time.
-"""
-
-
-
 TRAVEL_EXTRACTION_PROMPT = """
 SYSTEM:
 
@@ -67,45 +54,45 @@ def format_travel_prompt(ocr_text: str):
     return TRAVEL_EXTRACTION_PROMPT.replace("{{raw_text}}", ocr_text.strip())
 
 
-def build_detailed_itinerary_prompt(destination: str, arrival_time: str, arrival_date: str):
-    return f"""
-You are a highly organized and helpful travel planner.
+# def build_detailed_itinerary_prompt(destination: str, arrival_time: str, arrival_date: str):
+#     return f"""
+# You are a highly organized and helpful travel planner.
 
-The traveler is arriving in **{destination}** on **{arrival_date}** at **{arrival_time}**.
+# The traveler is arriving in **{destination}** on **{arrival_date}** at **{arrival_time}**.
 
-Your task is to build an itinerary for their arrival day that includes:
+# Your task is to build an itinerary for their arrival day that includes:
 
----
+# ---
 
-🍽️ **RESTAURANT RECOMMENDATIONS**  
-- Provide 7–8 restaurants in {destination}, clearly divided by:  
-  - Cheap ($)  
-  - Mid-range ($$)  
-  - Luxury ($$$)  
-- For each: name, cuisine, price per person, opening hours, and why it's recommended.
+# 🍽️ **RESTAURANT RECOMMENDATIONS**  
+# - Provide 7–8 restaurants in {destination}, clearly divided by:  
+#   - Cheap ($)  
+#   - Mid-range ($$)  
+#   - Luxury ($$$)  
+# - For each: name, cuisine, price per person, opening hours, and why it's recommended.
 
----
+# ---
 
-🏨 **HOTEL RECOMMENDATIONS**  
-- List 7–8 hotels near the city center or airport. Divide by budget, mid-range, and luxury.
-- Include: name, star rating, starting price/night, rough distance from airport, and reason to stay.
+# 🏨 **HOTEL RECOMMENDATIONS**  
+# - List 7–8 hotels near the city center or airport. Divide by budget, mid-range, and luxury.
+# - Include: name, star rating, starting price/night, rough distance from airport, and reason to stay.
 
----
+# ---
 
-🚗 **RENTAL CAR OPTIONS — DO NOT SKIP**  
-- Provide **3–5 rental car companies** near the **{destination} airport**
-- For each, include:
-  - Name of company
-  - Types of cars available (Compact, SUV, Luxury, etc.)
-  - Price range per day
-  - How to book (Online / In-person)
-  - Hours of operation
+# 🚗 **RENTAL CAR OPTIONS — DO NOT SKIP**  
+# - Provide **3–5 rental car companies** near the **{destination} airport**
+# - For each, include:
+#   - Name of company
+#   - Types of cars available (Compact, SUV, Luxury, etc.)
+#   - Price range per day
+#   - How to book (Online / In-person)
+#   - Hours of operation
 
----
+# ---
 
-Respond in clear, well-structured bullet points with headings for each section.
-Avoid skipping any section, especially car rentals.
-"""
+# Respond in clear, well-structured bullet points with headings for each section.
+# Avoid skipping any section, especially car rentals.
+# """
 
 
 def build_live_itinerary_prompt(destination: str, arrival_time: str, arrival_date: str, search_results: list) -> str:
@@ -120,7 +107,13 @@ You are given a set of **web search results** related to this destination. Use t
 
 ### 🧠 Hybrid Logic:
 
-- **Step 1:** Search the provided web results for restaurants, hotels, and rental car services.
+- **Step 1:** You must identify relevant results by scanning for key terms.
+  - Use search results mentioning **food, cafes, pizza, tacos, dining, bistro, etc.** for the Restaurants section.
+  - Use search results mentioning **hotels, lodging, accommodation, check-in, price per night, etc.** for the Hotels section.
+  - Use search results mentioning **car rentals, SUVs, sedans, compact, Hertz, Avis, pickup, etc.** for the Rental Cars section.
+
+  If you find no relevant search result in a category, then (and only then) fall back to internal knowledge and label it as `Fallback (LLM)`.
+
 - **Step 2:** If any category (e.g. Cheap restaurants) has no useful data, use your internal knowledge as a fallback — but clearly mark those entries with `Fallback` so the user knows they came from your knowledge base, not the web.
 - **Step 3:** Structure the final output as a clean Markdown-formatted itinerary with 3 recommendations per category, if possible.
 
@@ -129,15 +122,23 @@ You are given a set of **web search results** related to this destination. Use t
 ### 📋 Output Instructions:
 
 1. **Restaurants**
-   - Categories: Cheap ($), Mid-Range ($$), Luxury ($$$)
-   - For each: Give name, cuisine, approx. price, and why it’s recommended.
+   - Match against relevant search snippets using food-related words (e.g., "tacos", "pizza", "Michelin", "rooftop dining").
+   - If no relevant snippets are found, use `Fallback (LLM)` entries.
+   - Group by: Cheap ($), Mid-Range ($$), Luxury ($$$)
 
 2. **Hotels**
    - Categories: Budget, Mid-Range, Luxury
    - For each: Give name, price/night, location, and amenities.
 
 3. **Rental Cars**
-   - Give 2–3 options: Brand, types of cars, booking method, pickup info.
+   - Give 2-3 options: Brand, types of cars, booking method, pickup info.
+
+For each category, **only use Fallback (LLM)** if no web result includes relevant info. Do not skip web data if any match exists, even partial.
+
+  Please carefully match relevant content to each section. For example:
+- If a snippet mentions tacos or food, use it in the Restaurants section.
+- If a snippet mentions a hotel name, price, or amenities, use it in the Hotels section.
+- If it lists rental companies or pickup details, use it in Car Rentals.
 
 ✅ Clearly label whether each recommendation is:
 - `From Search Result X`
@@ -147,14 +148,27 @@ You are given a set of **web search results** related to this destination. Use t
 
 🔍 **Search Results**:
 """
-    for i, result in enumerate(search_results):
-        prompt += (
-            f"\n**Result {i+1}**\n"
-            f"- Title: {result.get('title', '').strip()}\n"
-            f"- URL: {result.get('url', '').strip()}\n"
-            f"- Snippet: {result.get('content', '').strip()}\n"
-        )
+    grouped = {
+    "restaurant": [],
+    "hotel": [],
+    "rental": [],
+    "general": []
+    }
 
+    for result in search_results:
+        category = result.get("category", "general")
+        grouped.setdefault(category, []).append(result)
+
+    # Add categorized results
+    for category in ["restaurant", "hotel", "rental"]:
+        prompt += f"\n### 🔎 {category.capitalize()} Search Results:\n"
+        for i, result in enumerate(grouped[category]):
+            prompt += (
+                f"\n**{category.capitalize()} Result {i+1}**\n"
+                f"- Title: {result.get('title', '')}\n"
+                f"- URL: {result.get('url', '')}\n"
+                f"- Snippet: {result.get('content', '')}\n"
+            )
     prompt += """
 
 ---
@@ -163,11 +177,6 @@ Now, using the **above search results first**, and your own knowledge *only when
 
 """
     return prompt
-
-
-
-
-
 
 def build_fallback_prompt(destination: str, arrival_time: str, arrival_date: str) -> str:
     return f"""
@@ -185,9 +194,9 @@ Please provide:
 For each recommendation, include:
 - Name
 - Cuisine/Type
-- Approx. price range (if possible)
+- Approx. price range (
 - Location or distance (general)
-- Why it’s recommended
+- Why its recommended
 
 Present everything in a clean, structured **Markdown format**, using headings and bullet points. Be detailed but avoid hallucinating facts you’re unsure of. Label all sections clearly and logically.
 """
