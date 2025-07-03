@@ -474,4 +474,27 @@ Example:
 
 """
 
+def build_user_query_prompt(user_query, search_results):
+    """
+    Formats a prompt for Gemma/Gemini that combines user query and web results.
+    This reuses your formatting style, lets you tweak in one place.
+    """
+    web_snippets = ""
+    for i, r in enumerate(search_results):
+        web_snippets += f"\n[{i+1}] {r.get('title', '')}\n{r.get('content', '')}\n{r.get('url', '')}\n"
 
+    prompt = f"""
+You are a travel assistant AI. The user can ask you **any** travel question—logistics, points of interest, airport info, restaurants, itineraries, hiking spots, etc.
+
+Use the recent web search results below for your answer. If the user's question is for an itinerary, organize your answer as a Markdown itinerary (group by price if appropriate). For any other type of question, just answer it directly using both your knowledge and the web results.
+
+User Question:
+{user_query}
+
+Recent Web Search Results:
+{web_snippets}
+
+Your response must be clear, useful, and formatted in Markdown if appropriate (for example, lists, sections, etc).
+If you can't find an answer, say so politely and suggest where the user might look.
+"""
+    return prompt

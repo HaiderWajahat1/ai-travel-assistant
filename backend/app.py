@@ -5,7 +5,7 @@ from pydantic import BaseModel
 from src.ocr_engine import extract_text_via_ocr_space
 from src.nlp_extractor import extract_location_info
 from src.gemma_client import call_gemma
-from config.prompts import build_fallback_prompt, build_live_itinerary_prompt
+from config.prompts import build_fallback_prompt, build_live_itinerary_prompt, build_user_query_prompt
 from src.searx_client import search_searx
 
 
@@ -23,9 +23,12 @@ class TextInput(BaseModel):
     raw_text: str
 
 
-class CustomItineraryRequest(BaseModel):
-    base_prompt: str
-    user_input: str
+class AskRequest(BaseModel):
+    user_query: str
+
+# Simple cache for last known destination (replace with DB/session for prod)
+last_destination = {"city": None}
+
     
 # @app.post("/extract-details")
 # def extract_info_from_text(input: TextInput):
@@ -73,7 +76,8 @@ async def display_itinerary(file: UploadFile = File(...)):
         destination = structured_data.get("destination")
         arrival_time = structured_data.get("arrival_time", "TBD")
         arrival_date = structured_data.get("arrival_date", "TBD")
-
+        if destination:
+            last_destination["city"] = destination
         if not destination:
             raise HTTPException(status_code=400, detail="Destination not found in extracted data")
 
@@ -104,20 +108,22 @@ async def display_itinerary(file: UploadFile = File(...)):
     
 
 
-# --- NEW: CUSTOM ITINERARY ENDPOINT ---
-@app.post("/custom-itinerary")
-def custom_itinerary(req: CustomItineraryRequest):
-    """
-    Accepts a base itinerary prompt and user's extra instruction, combines, and calls LLM.
-    """
-    final_prompt = req.base_prompt.strip()
-    if req.user_input:
-        final_prompt += f"\nUser customization request: {req.user_input.strip()}"
+# --- NEW: search bar ENDPOINT ---
+@app.post("/ask")
+def ask_endpoint(req: AskRequest):
+    # Use the last known city if user didn't specify one
+    user_query = req.user_query
+    city = last_destination.get("city")
+    # Check if the city is mentioned in user_query
+    if city and city.lower() not in user_query.lower():
+        enhanced_query = f"{user_query} in {city}"
+    else:
+        enhanced_query = user_query
 
-    # Call LLM (Gemma or whatever you're using)
-    gemma_output = call_gemma(final_prompt)
-
-    return {"itinerary": gemma_output}
-    
+    # Use enhanced_query for both search and prompt
+    search_results = search_searx(enhanced_query, max_results=6)
+    prompt = build_user_query_prompt(enhanced_query, search_results)
+    answer = call_gemma(prompt)
+    return {"answer": answer}
 
 
