@@ -33,7 +33,36 @@ if uploaded:
             # Show the pretty, formatted itinerary!
             if "itinerary" in data and "output" in data["itinerary"]:
                 st.markdown(data["itinerary"]["output"])
+                # --- Customization Chat Bar ---
+                st.subheader("💬 Customize Your Itinerary")
+
+                # Store the original itinerary markdown as the "base prompt"
+                base_prompt = data["itinerary"]["output"]
+
+                user_custom = st.text_input(
+                    "How do you want to customize your itinerary? (e.g., 'Show only places near the airport')"
+                )
+
+                if st.button("Submit Custom Request"):
+                    with st.spinner("Updating itinerary..."):
+                        resp2 = requests.post(
+                            "https://ai-travel-assistant-1-f396.onrender.com/custom-itinerary",   # Backend custom endpoint
+                            json={
+                                "base_prompt": base_prompt,
+                                "user_input": user_custom
+                            }
+                        )
+                    if resp2.ok:
+                        custom_data = resp2.json()
+                        st.markdown("---")
+                        st.header("📝 Customized Itinerary")
+                        st.markdown(custom_data["itinerary"])
+                    else:
+                        st.error(f"Custom itinerary failed: {resp2.status_code} - {resp2.text}")
             else:
                 st.warning("No formatted itinerary output found.")
         else:   
             st.error(f"Error: {resp.status_code} - {resp.text}")
+
+else:
+    st.info("Please upload a boarding pass or ticket image to get started.")

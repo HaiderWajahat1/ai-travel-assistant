@@ -1,5 +1,6 @@
 from fastapi import FastAPI, UploadFile, File, HTTPException
 from fastapi.responses import JSONResponse, PlainTextResponse
+from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from src.ocr_engine import extract_text_via_ocr_space
 from src.nlp_extractor import extract_location_info
@@ -10,41 +11,54 @@ from src.searx_client import search_searx
 
 app = FastAPI()
 
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],  # For local dev, restrict in production!
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
 class TextInput(BaseModel):
     raw_text: str
+
+
+class CustomItineraryRequest(BaseModel):
+    base_prompt: str
+    user_input: str
     
-@app.post("/extract-details")
-def extract_info_from_text(input: TextInput):
-    try:
-        result = extract_location_info(input.raw_text)
-        return JSONResponse(content={"structured_info": result})
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+# @app.post("/extract-details")
+# def extract_info_from_text(input: TextInput):
+#     try:
+#         result = extract_location_info(input.raw_text)
+#         return JSONResponse(content={"structured_info": result})
+#     except Exception as e:
+#         raise HTTPException(status_code=500, detail=str(e))
 
-@app.post("/extract-text")
-async def extract_text(file: UploadFile = File(...)):
-    text = await extract_text_via_ocr_space(file)
-    if text:
-        return JSONResponse(content={"extracted_text": text})
-    raise HTTPException(status_code=500, detail="OCR failed.")
+# @app.post("/extract-text")
+# async def extract_text(file: UploadFile = File(...)):
+#     text = await extract_text_via_ocr_space(file)
+#     if text:
+#         return JSONResponse(content={"extracted_text": text})
+#     raise HTTPException(status_code=500, detail="OCR failed.")
 
 
-@app.post("/extract-structured-info")
-async def extract_structured_info(file: UploadFile = File(...)):
-    try:
-        # Step 1: OCR
-        text = await extract_text_via_ocr_space(file)
-        if not text:
-            raise HTTPException(status_code=500, detail="OCR failed to extract any text")
+# @app.post("/extract-structured-info")
+# async def extract_structured_info(file: UploadFile = File(...)):
+#     try:
+#         # Step 1: OCR
+#         text = await extract_text_via_ocr_space(file)
+#         if not text:
+#             raise HTTPException(status_code=500, detail="OCR failed to extract any text")
 
-        # Step 2: NLP extraction
-        structured_data = extract_location_info(text)
-        return JSONResponse(content={
-            "structured_info": structured_data
-        })
+#         # Step 2: NLP extraction
+#         structured_data = extract_location_info(text)
+#         return JSONResponse(content={
+#             "structured_info": structured_data
+#         })
 
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+#     except Exception as e:
+#         raise HTTPException(status_code=500, detail=str(e))
     
 @app.post("/display-itinerary")
 async def display_itinerary(file: UploadFile = File(...)):
@@ -87,6 +101,23 @@ async def display_itinerary(file: UploadFile = File(...)):
 
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+    
+
+
+# --- NEW: CUSTOM ITINERARY ENDPOINT ---
+@app.post("/custom-itinerary")
+def custom_itinerary(req: CustomItineraryRequest):
+    """
+    Accepts a base itinerary prompt and user's extra instruction, combines, and calls LLM.
+    """
+    final_prompt = req.base_prompt.strip()
+    if req.user_input:
+        final_prompt += f"\nUser customization request: {req.user_input.strip()}"
+
+    # Call LLM (Gemma or whatever you're using)
+    gemma_output = call_gemma(final_prompt)
+
+    return {"itinerary": gemma_output}
     
 
 
