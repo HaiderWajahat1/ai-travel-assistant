@@ -26,8 +26,10 @@ class TextInput(BaseModel):
 class AskRequest(BaseModel):
     user_query: str
 
-# Simple cache for last known destination (replace with DB/session for prod)
-last_destination = {"city": None}
+last_context = {
+    "city": None,
+    "airport": None
+}
 
     
 # @app.post("/extract-details")
@@ -74,10 +76,13 @@ async def display_itinerary(file: UploadFile = File(...)):
         # Step 2: NLP Extraction
         structured_data = extract_location_info(text)
         destination = structured_data.get("destination")
+        airport = structured_data.get("airport_name") or structured_data.get("airport_code")  # Use both if possible
         arrival_time = structured_data.get("arrival_time", "TBD")
         arrival_date = structured_data.get("arrival_date", "TBD")
         if destination:
-            last_destination["city"] = destination
+            last_context["city"] = destination
+        if airport:
+            last_context["airport"] = airport
         if not destination:
             raise HTTPException(status_code=400, detail="Destination not found in extracted data")
 
@@ -111,19 +116,22 @@ async def display_itinerary(file: UploadFile = File(...)):
 # --- NEW: search bar ENDPOINT ---
 @app.post("/ask")
 def ask_endpoint(req: AskRequest):
-    # Use the last known city if user didn't specify one
     user_query = req.user_query
-    city = last_destination.get("city")
-    # Check if the city is mentioned in user_query
-    if city and city.lower() not in user_query.lower():
-        enhanced_query = f"{user_query} in {city}"
-    else:
-        enhanced_query = user_query
+    city = last_context.get("city")
+    airport = last_context.get("airport")
 
-    # Use enhanced_query for both search and prompt
+    # Smartly add context if not in user query
+    enhanced_query = user_query
+    if city and city.lower() not in user_query.lower():
+        enhanced_query += f" in {city}"
+    if airport and airport.lower() not in user_query.lower():
+        enhanced_query += f" near {airport}"
+
+    # Web search uses the enhanced query
     search_results = search_searx(enhanced_query, max_results=6)
-    prompt = build_user_query_prompt(enhanced_query, search_results)
+
+    # Pass city/airport context to the prompt builder
+    prompt = build_user_query_prompt(user_query, search_results, city=city, airport=airport)
+
     answer = call_gemma(prompt)
     return {"answer": answer}
-
-

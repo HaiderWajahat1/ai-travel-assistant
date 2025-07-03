@@ -94,139 +94,6 @@ def categorize_by_price(results, is_restaurant=True):
     return grouped
 
 
-# def build_live_itinerary_prompt(destination: str, arrival_time: str, arrival_date: str, search_results: list) -> str:
-#     prompt = f"""
-# You are a travel assistant AI helping a traveler plan their arrival-day experience.
-
-# The traveler is landing in **{destination}** on **{arrival_date}** at **{arrival_time}**.
-
-# You are given a set of **web search results** related to this destination. Use these results to generate your response.
-
-# ---
-
-# ### 🧠 Hybrid Logic:
-
-# - Categorize restaurants and hotels as Cheap, Mid-Range, and Luxury using price info or cues.
-# - Show up to 3 recommendations per tier.
-# - Show a clickable website for each.
-# - Use internal knowledge (Fallback LLM) only if web results for a tier are missing.
-
-# ---
-
-# ### 🍽️ Restaurants
-# """
-#     grouped = {
-#         "restaurant": [],
-#         "hotel": [],
-#         "rental": [],
-#         "general": []
-#     }
-#     for result in search_results:
-#         category = result.get("category", "general")
-#         grouped.setdefault(category, []).append(result)
-
-#     # Restaurants - by tier
-#     if grouped['restaurant']:
-#         categorized = categorize_by_price(grouped['restaurant'], is_restaurant=True)
-#         for tier in ["Cheap", "Mid-Range", "Luxury"]:
-#             prompt += f"\n#### {tier}\n"
-#             items = categorized[tier]
-#             if items:
-#                 for i, result in enumerate(items[:3]):
-#                     price_info = extract_price(result.get('content', '')) or guess_price_range(result.get('content', '')) or guess_price_range(result.get('title', ''))
-#                     prompt += (
-#                         f"- **{result.get('title', '')}** `From Search Result {i+1}`\n"
-#                         f"  {result.get('content', '')}\n"
-#                         f"  **Estimated Price:** {price_info if price_info else 'Not listed'}\n"
-#                     )
-#                     if result.get("url"):
-#                         prompt += f"  [Website]({result.get('url')})\n"
-#             else:
-#                 prompt += "_No options found in this tier._\n"
-#     else:
-#         # Fallback for restaurants: adjust names as needed
-#         fallback = {
-#             "Cheap": ["Joe's Pizza", "Superiority Burger", "Mamoun's Falafel"],
-#             "Mid-Range": ["Shake Shack", "The Smith", "ABC Kitchen"],
-#             "Luxury": ["Le Bernardin", "Per Se", "Guy Savoy"]
-#         }
-#         for tier in ["Cheap", "Mid-Range", "Luxury"]:
-#             prompt += f"\n#### {tier}\n"
-#             for name in fallback[tier]:
-#                 google_link = f"https://www.google.com/search?q={destination.replace(' ', '+')}+restaurant"
-
-#                 prompt += (
-#                     f"- **{name}** `Fallback (LLM)`\n"
-#                     f"  _(No price info available)_\n"
-#                     f"  [Website]({google_link})\n"
-#                 )
-
-#     prompt += "\n### 🏨 Hotels\n"
-
-#     # Hotels - by tier
-#     if grouped['hotel']:
-#         categorized = categorize_by_price(grouped['hotel'], is_restaurant=False)
-#         for tier in ["Cheap", "Mid-Range", "Luxury"]:
-#             prompt += f"\n#### {tier}\n"
-#             items = categorized[tier]
-#             if items:
-#                 for i, result in enumerate(items[:3]):
-#                     price_info = extract_price(result.get('content', '')) or guess_price_range(result.get('content', '')) or guess_price_range(result.get('title', ''))
-#                     prompt += (
-#                         f"- **{result.get('title', '')}** `From Search Result {i+1}`\n"
-#                         f"  {result.get('content', '')}\n"
-#                         f"  **Estimated Price:** {price_info if price_info else 'Not listed'}\n"
-#                     )
-#                     if result.get("url"):
-#                         prompt += f"  [Website]({result.get('url')})\n"
-#             else:
-#                 prompt += "_No options found in this tier._\n"
-#     else:
-#         fallback = {
-#             "Cheap": ["The Jane Hotel", "Pod 39", "The Local NYC"],
-#             "Mid-Range": ["Arlo Hotels", "The Library Hotel", "The Hoxton"],
-#             "Luxury": ["Four Seasons Hotel", "The Peninsula Paris", "Hotel Plaza Athénée"]
-#         }
-#         for tier in ["Cheap", "Mid-Range", "Luxury"]:
-#             prompt += f"\n#### {tier}\n"
-#             for name in fallback[tier]:
-#                 google_link = f"https://www.google.com/search?q={destination.replace(' ', '+')}+hotel"
-#                 prompt += (
-#                     f"- **{name}** `Fallback (LLM)`\n"
-#                     f"  _(No price info available)_\n"
-#                     f"  [Website]({google_link})\n"
-#                 )
-
-#     prompt += "\n### 🚗 Rental Cars\n"
-#     if grouped['rental']:
-#         for i, result in enumerate(grouped['rental']):
-#             prompt += (
-#                 f"- **{result.get('title', '')}** `From Search Result {i+1}`\n"
-#                 f"  {result.get('content', '')}\n"
-#             )
-#             if result.get("url"):
-#                 prompt += f"  [Website]({result.get('url')})\n"
-#     else:
-#         fallback_rentals = [
-#             "Hertz", "Avis", "Enterprise"
-#         ]
-#         for name in fallback_rentals:
-#             google_link = f"https://www.google.com/search?q={destination.replace(' ', '+')}+car+rental"
-#             prompt += (
-#                 f"- **{name}** `Fallback (LLM)`\n"
-#                 f"  [Website]({google_link})\n"
-#             )
-
-#     prompt += """
-
-# ---
-
-# Now, using the **above search results first**, and your own knowledge *only when necessary*, generate a well-structured Markdown itinerary grouped by Cheap, Mid-Range, and Luxury for both restaurants and hotels. Do not hallucinate URLs or make up fake brands. Always mention whether each suggestion came from `Search Result X` or is a `Fallback (LLM)`.
-
-# """
-#     return prompt
-
-
 def build_live_itinerary_prompt(destination: str, arrival_time: str, arrival_date: str, search_results: list) -> str:
     prompt = f"""
 You are a travel assistant AI helping a traveler plan their arrival-day experience.
@@ -434,55 +301,31 @@ Example:
 
 """
 
-# def build_user_query_prompt(user_query, search_results):
-#     """
-#     Formats a prompt for Gemma/Gemini that combines user query and web results.
-#     This reuses your formatting style, lets you tweak in one place.
-#     """
-#     web_snippets = ""
-#     for i, r in enumerate(search_results):
-#         web_snippets += f"\n[{i+1}] {r.get('title', '')}\n{r.get('content', '')}\n{r.get('url', '')}\n"
 
-#     prompt = f"""
-# You are a travel assistant AI. The user can ask you **any** travel question—logistics, points of interest, airport info, restaurants, itineraries, hiking spots, etc.
+def build_user_query_prompt(user_query, search_results, city=None, airport=None):
+    # Show context at the top if available
+    context_note = ""
+    if city or airport:
+        context_note = "Traveler Context:\n"
+        if city:
+            context_note += f"- Destination city: {city}\n"
+        if airport:
+            context_note += f"- Arrival airport: {airport}\n"
+        context_note += (
+            "\n(Do NOT ask for airport info. Use the above context in your answer!)\n"
+        )
 
-# Use the recent web search results below for your answer. If the user's question is for an itinerary, organize your answer as a Markdown itinerary (group by price if appropriate). For any other type of question, just answer it directly using both your knowledge and the web results.
-
-# User Question:
-# {user_query}
-
-# Recent Web Search Results:
-# {web_snippets}
-
-# Your response must be clear, useful, and formatted in Markdown if appropriate (for example, lists, sections, etc).
-# If you can't find an answer, say so politely and suggest where the user might look.
-# """
-#     return prompt
-
-
-def build_user_query_prompt(user_query, search_results):
-    """
-    Formats a prompt for Gemma/Gemini that combines user query and web results.
-    """
     web_snippets = ""
     for r in search_results:
-        # Only show Website Link
         link = f"[Website Link]({r.get('url','')})" if r.get('url') else ""
         web_snippets += f"\n- **{r.get('title', '')}**\n  {r.get('content', '')}\n  {link}\n"
 
-    prompt = f"""
-You are a travel assistant AI. The user can ask you **any** travel question—logistics, points of interest, airport info, restaurants, itineraries, hiking spots, etc.
-
-Use the recent web search results below for your answer. If the user's question is for an itinerary, organize your answer as a Markdown itinerary (group by price if appropriate). For any other type of question, just answer it directly using both your knowledge and the web results.
-
-User Question:
-{user_query}
-
-Recent Web Search Results:
-{web_snippets}
-
-Your response must be clear, useful, and formatted in Markdown if appropriate (for example, lists, sections, etc).
-If you can't find an answer, say so politely and suggest where the user might look.
-"""
+    prompt = (
+        f"You are a travel assistant AI. Use the context below and the web search results to answer the user as if you're a smart travel planner.\n"
+        f"{context_note}"
+        f"User Question:\n{user_query}\n\n"
+        f"Recent Web Search Results:\n{web_snippets}\n"
+        "Your response must be clear and relevant. If you need to reference an airport, assume it's the user's arrival airport above."
+    )
     return prompt
 

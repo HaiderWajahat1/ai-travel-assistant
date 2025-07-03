@@ -42,8 +42,8 @@ if uploaded:
         files = {"file": (uploaded.name, uploaded.getvalue(), uploaded.type)}
         with st.spinner("🧭 Processing..."):
             resp = requests.post(
-                # "https://ai-travel-assistant-1-f396.onrender.com/display-itinerary",
-                "http://localhost:8000/display-itinerary",  # Use your backend URL here
+                "https://ai-travel-assistant-1-f396.onrender.com/display-itinerary",
+                # "http://localhost:8000/display-itinerary",  # Use your backend URL here
                 files=files
             )
         if resp.ok:
@@ -73,8 +73,8 @@ if st.session_state.get('itinerary'):
     if submit_chat and user_query:
         with st.spinner("Getting your answer..."):
             resp3 = requests.post(
-                # "https://ai-travel-assistant-1-f396.onrender.com/ask",
-                "http://localhost:8000/ask",  # Use your backend URL here
+                "https://ai-travel-assistant-1-f396.onrender.com/ask",
+                # "http://localhost:8000/ask",  # Use your backend URL here
                 json={"user_query": user_query}
             )
         if resp3.ok:
