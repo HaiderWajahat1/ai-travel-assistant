@@ -2,7 +2,7 @@ import streamlit as st
 import requests
 import re
 
-st.set_page_config(page_title="Travel Planner Pro", layout="wide")
+st.set_page_config(page_title="AI Travel Planner", layout="wide")
 st.markdown("""
 <style>
   [data-testid="stSidebar"] {width: 280px;}
@@ -41,30 +41,24 @@ st.session_state.setdefault('city', "")
 st.session_state.setdefault('airport', "")
 st.session_state.setdefault('arrival_time', "")
 
-st.title("📸 Upload Travel Document")
-st.write("Upload a boarding pass or ticket to generate your itinerary.")
+st.title("AI Travel Planner")
+# st.write("Upload a boarding pass or ticket to generate your itinerary.")
 
 # Two-column upload + button layout
 col1, col2 = st.columns([2, 3])
 with col1:
-    uploaded = st.file_uploader("", type=["png", "jpg", "jpeg"], key="file_uploader")
+    uploaded = st.file_uploader(
+        "Upload your boarding pass or travel ticket (JPG, PNG, JPEG)",
+        type=["png", "jpg", "jpeg"],
+        key="file_uploader",
+        label_visibility="visible"
+    )
     if uploaded:
         st.session_state.uploaded = uploaded
 
 with col2:
     if st.session_state.uploaded:
         st.image(st.session_state.uploaded, caption="Preview", use_container_width=True)
-
-    if st.session_state.itinerary:
-        city = st.session_state.get("city", "")
-        airport = st.session_state.get("airport", "")
-        arrival_time = st.session_state.get("arrival_time", "")
-        st.markdown("### ✈️ Travel Info")
-        st.markdown(f"""
-        - **City:** {city or 'Not found'}
-        - **Airport:** {airport or 'Not found'}
-        - **Arrival Time:** {arrival_time or 'Not found'}
-        """)
 
     if not st.session_state.is_generating:
         if st.session_state.uploaded and st.button("Generate Itinerary", use_container_width=True):
