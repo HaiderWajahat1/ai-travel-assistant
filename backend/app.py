@@ -35,6 +35,85 @@ last_context = {
 
 chat_history = []
 
+# @app.post("/display-itinerary")
+# async def display_itinerary(
+#     file: UploadFile = File(...),
+#     preferences: str = Form(""),
+#     top_k: int = Form(3)
+# ):
+#     try:
+#         user_prefs = [p.strip() for p in preferences.split(",") if p.strip()]
+
+#         exclusion_flags = {
+#             "skip_hotels": False,
+#             "skip_rentals": False,
+#             "skip_restaurants": False
+#         }
+
+#         for pref in user_prefs:
+#             lowered = pref.lower()
+#             if "have a car" in lowered or ("rental" in lowered and "not needed" in lowered):
+#                 exclusion_flags["skip_rentals"] = True
+#             if "have accommodation" in lowered or "hotel is booked" in lowered or "no hotel" in lowered:
+#                 exclusion_flags["skip_hotels"] = True
+#             if "no food" in lowered or "don't want restaurants" in lowered:
+#                 exclusion_flags["skip_restaurants"] = True
+
+#         # Step 1: OCR
+#         text = await extract_text_via_ocr_space(file)
+#         if not text:
+#             raise HTTPException(status_code=500, detail="OCR failed to extract text")
+
+#         # Step 2: NLP Extraction
+#         structured_data = extract_location_info(text)
+#         destination = structured_data.get("destination")
+#         airport = structured_data.get("airport_name") or structured_data.get("airport_code")
+#         arrival_time = structured_data.get("arrival_time", "TBD")
+#         arrival_date = structured_data.get("arrival_date", "TBD")
+
+#         if destination:
+#             last_context["city"] = destination
+#         if airport:
+#             last_context["airport"] = airport
+#         if arrival_time:
+#             last_context["arrival_time"] = arrival_time
+#         if arrival_date:
+#             last_context["arrival_date"] = arrival_date
+
+#         if not destination:
+#             raise HTTPException(status_code=400, detail="Destination not found in extracted data")
+
+#         # Step 3: Web search
+#         search_results = []
+#         if not exclusion_flags["skip_restaurants"]:
+#             search_results += search_searx(f"best restaurants in {destination}", tag="restaurant", max_results=6)
+#         if not exclusion_flags["skip_hotels"]:
+#             search_results += search_searx(f"best hotels in {destination}", tag="hotel", max_results=6)
+#         if not exclusion_flags["skip_rentals"]:
+#             search_results += search_searx(f"car rentals in {destination}", tag="rental", max_results=4)
+
+#         result_titles = [r.get("title", "").lower() for r in search_results]
+#         has_results = any("restaurant" in t or "hotel" in t or "car" in t for t in result_titles)
+
+#         if has_results:
+#             if exclusion_flags["skip_rentals"]:
+#                 user_prefs.append("Skip car rental suggestions — traveler already has a vehicle.")
+#             if exclusion_flags["skip_hotels"]:
+#                 user_prefs.append("Skip hotel suggestions — traveler already has accommodation.")
+#             if exclusion_flags["skip_restaurants"]:
+#                 user_prefs.append("Skip restaurant suggestions.")
+
+#             prompt = build_live_itinerary_prompt(destination, arrival_time, arrival_date, search_results, user_prefs, top_k)
+#         else:
+#             prompt = build_fallback_prompt(destination, arrival_time, arrival_date, user_prefs, top_k)
+
+#         gemma_output = call_gemma(prompt)
+#         return {"itinerary": gemma_output}
+
+#     except Exception as e:
+#         raise HTTPException(status_code=500, detail=str(e))
+
+
 @app.post("/display-itinerary")
 async def display_itinerary(
     file: UploadFile = File(...),
@@ -92,8 +171,8 @@ async def display_itinerary(
         if not exclusion_flags["skip_rentals"]:
             search_results += search_searx(f"car rentals in {destination}", tag="rental", max_results=4)
 
-        result_titles = [r.get("title", "").lower() for r in search_results]
-        has_results = any("restaurant" in t or "hotel" in t or "car" in t for t in result_titles)
+        # ✅ Updated logic: more robust result check
+        has_results = len(search_results) > 0
 
         if has_results:
             if exclusion_flags["skip_rentals"]:
@@ -113,33 +192,6 @@ async def display_itinerary(
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
-# @app.post("/ask")
-# def ask_endpoint(req: AskRequest):
-#     user_query = req.user_query
-#     city = last_context.get("city")
-#     airport = last_context.get("airport")
-#     arrival_time = last_context.get("arrival_time")
-#     arrival_date = last_context.get("arrival_date")
-
-#     enhanced_query = user_query
-#     if city and city.lower() not in user_query.lower():
-#         enhanced_query += f" in {city}"
-#     if airport and airport.lower() not in user_query.lower():
-#         enhanced_query += f" near {airport}"
-
-#     search_results = search_searx(enhanced_query, max_results=6)
-
-#     prompt = build_user_query_prompt(
-#         user_query,
-#         search_results,
-#         city=city,
-#         airport=airport,
-#         arrival_time=arrival_time,
-#         arrival_date=arrival_date
-#     )
-
-#     answer = call_gemma(prompt)
-#     return {"answer": answer}
 
 
 @app.post("/ask")

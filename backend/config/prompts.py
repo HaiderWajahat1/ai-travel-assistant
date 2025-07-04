@@ -65,21 +65,76 @@ def extract_price(text):
         return match.group(0)
     return None
 
+# def guess_price_range(text):
+#     text = text.lower()
+#     # For both restaurants and hotels
+#     if "$$$" in text or "fine dining" in text or "michelin" in text or "luxury" in text or "five-star" in text or "expensive" in text or "suite" in text or "penthouse" in text:
+#         return "$$$"
+#     if "$$" in text or "mid-range" in text or "bistro" in text or "popular" in text or "moderate" in text or "brasserie" in text or "boutique" in text or "modern" in text or "4-star" in text:
+#         return "$$"
+#     if "$" in text or "affordable" in text or "cheap" in text or "budget" in text or "fast food" in text or "pizza" in text or "diner" in text or "casual" in text or "hostel" in text or "basic" in text or "value" in text:
+#         return "$"
+#     return None
+
 def guess_price_range(text):
     text = text.lower()
-    # For both restaurants and hotels
-    if "$$$" in text or "fine dining" in text or "michelin" in text or "luxury" in text or "five-star" in text or "expensive" in text or "suite" in text or "penthouse" in text:
+    # Luxury indicators
+    if (
+        "$$$" in text or "fine dining" in text or "michelin" in text or
+        "luxury" in text or "five-star" in text or "expensive" in text or
+        "suite" in text or "penthouse" in text or "exclusive" in text or
+        "high-end" in text or "gourmet" in text
+    ):
         return "$$$"
-    if "$$" in text or "mid-range" in text or "bistro" in text or "popular" in text or "moderate" in text or "brasserie" in text or "boutique" in text or "modern" in text or "4-star" in text:
+    
+    # Mid-range indicators
+    if (
+        "$$" in text or "mid-range" in text or "bistro" in text or
+        "popular" in text or "moderate" in text or "brasserie" in text or
+        "boutique" in text or "modern" in text or "4-star" in text or
+        "casual dining" in text or "stylish" in text or "quality food" in text
+    ):
         return "$$"
-    if "$" in text or "affordable" in text or "cheap" in text or "budget" in text or "fast food" in text or "pizza" in text or "diner" in text or "casual" in text or "hostel" in text or "basic" in text or "value" in text:
+    
+    # Cheap indicators
+    if (
+        "$" in text or "affordable" in text or "cheap" in text or
+        "budget" in text or "fast food" in text or "pizza" in text or
+        "diner" in text or "grab-and-go" in text or "street food" in text or
+        "food court" in text or "local eatery" in text or "value for money" in text
+    ):
         return "$"
+    
     return None
+
+
+# def categorize_by_price(results, is_restaurant=True):
+#     grouped = defaultdict(list)
+#     for res in results:
+#         price = extract_price(res.get('content', '')) or guess_price_range(res.get('content', '')) or guess_price_range(res.get('title', ''))
+#         if price == "$$$":
+#             grouped["Luxury"].append(res)
+#         elif price == "$$":
+#             grouped["Mid-Range"].append(res)
+#         elif price == "$":
+#             grouped["Cheap"].append(res)
+#         else:
+#             grouped["Mid-Range"].append(res)  # Default if no info
+#     return grouped
 
 def categorize_by_price(results, is_restaurant=True):
     grouped = defaultdict(list)
     for res in results:
-        price = extract_price(res.get('content', '')) or guess_price_range(res.get('content', '')) or guess_price_range(res.get('title', ''))
+        title = res.get('title', '')
+        content = res.get('content', '')
+
+        # Try to extract from content first, then title
+        price = (
+            extract_price(content) or
+            guess_price_range(content) or
+            guess_price_range(title)
+        )
+
         if price == "$$$":
             grouped["Luxury"].append(res)
         elif price == "$$":
@@ -87,9 +142,9 @@ def categorize_by_price(results, is_restaurant=True):
         elif price == "$":
             grouped["Cheap"].append(res)
         else:
-            grouped["Mid-Range"].append(res)  # Default if no info
-    return grouped
+            grouped["Mid-Range"].append(res)  # fallback tier
 
+    return grouped
 
 def build_live_itinerary_prompt(destination: str, arrival_time: str, arrival_date: str, search_results: list, preferences: list[str], top_k: int) -> str:
     # Inject user preferences at the top
@@ -150,7 +205,7 @@ You are given a set of **web search results** related to this destination. Use t
                         if result.get("url"):
                             prompt += f"  [Website Link]({result.get('url')})\n"
                 else:
-                    prompt += "_No options found in this tier._\n"
+                    prompt += "_No options found in this tier._ (You may suggest known or plausible venues in this price tier using internal knowledge.)\n"
         else:
             fallback = {
                 "Cheap": ["Joe's Pizza", "Superiority Burger", "Mamoun's Falafel"],
