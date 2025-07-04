@@ -336,8 +336,15 @@ Example:
     return prompt
 
 
-def build_user_query_prompt(user_query, search_results, city=None, airport=None, arrival_time=None, arrival_date=None):
+def build_user_query_prompt(user_query, search_results, city=None, airport=None, arrival_time=None, arrival_date=None, chat_history=None):
     # Show context at the top if available
+
+    history_note = ""
+    if chat_history:
+        history_note += "Earlier Conversation:\n"
+        for i, chat in enumerate(chat_history[-5:], 1):
+            history_note += f"{i}. Q: {chat['question']}\n   A: {chat['answer']}\n"
+        history_note += "\nIf the user asks to 'elaborate' or 'what about that', use the relevant Q&A above.\n"
     context_note = ""
     if city or airport or arrival_time or arrival_date:
         context_note = "Traveler Context:\n"
@@ -359,6 +366,7 @@ def build_user_query_prompt(user_query, search_results, city=None, airport=None,
     prompt = (
         f"You are a travel assistant AI. Use the context below and the web search results to answer the user as if you're a smart travel planner.\n"
         f"{context_note}"
+        f"{history_note}"
         f"User Question:\n{user_query}\n\n"
         f"Recent Web Search Results:\n{web_snippets}\n"
         "Your response must be clear and relevant. Do not repeat what is already in the context."

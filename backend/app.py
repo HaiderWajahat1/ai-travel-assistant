@@ -33,6 +33,7 @@ last_context = {
     "arrival_date": None
 }
 
+chat_history = []
 
 @app.post("/display-itinerary")
 async def display_itinerary(
@@ -112,6 +113,35 @@ async def display_itinerary(
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
+# @app.post("/ask")
+# def ask_endpoint(req: AskRequest):
+#     user_query = req.user_query
+#     city = last_context.get("city")
+#     airport = last_context.get("airport")
+#     arrival_time = last_context.get("arrival_time")
+#     arrival_date = last_context.get("arrival_date")
+
+#     enhanced_query = user_query
+#     if city and city.lower() not in user_query.lower():
+#         enhanced_query += f" in {city}"
+#     if airport and airport.lower() not in user_query.lower():
+#         enhanced_query += f" near {airport}"
+
+#     search_results = search_searx(enhanced_query, max_results=6)
+
+#     prompt = build_user_query_prompt(
+#         user_query,
+#         search_results,
+#         city=city,
+#         airport=airport,
+#         arrival_time=arrival_time,
+#         arrival_date=arrival_date
+#     )
+
+#     answer = call_gemma(prompt)
+#     return {"answer": answer}
+
+
 @app.post("/ask")
 def ask_endpoint(req: AskRequest):
     user_query = req.user_query
@@ -128,14 +158,40 @@ def ask_endpoint(req: AskRequest):
 
     search_results = search_searx(enhanced_query, max_results=6)
 
+    # Use existing chat history if present
     prompt = build_user_query_prompt(
         user_query,
         search_results,
         city=city,
         airport=airport,
         arrival_time=arrival_time,
-        arrival_date=arrival_date
+        arrival_date=arrival_date,
+        chat_history=chat_history
     )
 
     answer = call_gemma(prompt)
-    return {"answer": answer}
+
+    # Extract answer text
+    if isinstance(answer, dict):
+        answer_text = answer.get("output", "")
+    else:
+        answer_text = answer
+
+    # Store chat in memory
+    chat_history.append({"question": user_query, "answer": answer_text})
+
+    # Keep only the latest 5, summarize old ones
+    summary_blob = ""
+    if len(chat_history) > 5:
+        older = chat_history[:-5]
+        chat_history[:] = chat_history[-5:]
+
+        summary_blob = "SUMMARY OF EARLIER CONVERSATION:\n"
+        for i, chat in enumerate(older, 1):
+            summary_blob += f"{i}. Q: {chat['question']}\n   A: {chat['answer']}\n"
+
+    return {
+        "answer": answer_text,
+        "history": chat_history,
+        "summary": summary_blob
+    }
