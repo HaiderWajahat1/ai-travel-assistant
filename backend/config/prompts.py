@@ -14,7 +14,7 @@ You are expected to:
 - Extract boarding time (if available)
 - Extract arrival time and date (for the final destination)
 
-Your job is to extract clean, corrected information from OCR text extracted from a boarding pass or travel ticket. The OCR text may contain typos, misspelled city names (like "Duban" instead of "Dubai"), or incomplete information.
+Your job is to extract clean, corrected information from OCR text extracted from a boarding pass or travel ticket. The OCR text may contain typos, misspelled city names (like "londin" instead of "london"), or incomplete information.
 
 You must:
 - Auto-correct any misspelled cities or airports using common global travel destinations
