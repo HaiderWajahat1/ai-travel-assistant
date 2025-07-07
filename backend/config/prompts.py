@@ -9,31 +9,30 @@ You are an intelligent travel assistant designed to extract structured informati
 
 You are expected to:
 - Detect origin and destination cities
-- Identify any layover cities in between
 - Extract flight number
+- Extract airport name (if available)
+- Extract boarding time (if available)
 - Extract arrival time and date (for the final destination)
-- For each layover, extract:
-  - Location
-  - Arrival time
-  - Departure time
-  - Duration in minutes (if possible)
+
+Your job is to extract clean, corrected information from OCR text extracted from a boarding pass or travel ticket. The OCR text may contain typos, misspelled city names (like "Duban" instead of "Dubai"), or incomplete information.
+
+You must:
+- Auto-correct any misspelled cities or airports using common global travel destinations
+- Return fields as accurate, standardized JSON
+- NEVER guess—if something is unclear, return "Unknown"
+- Do not include extra explanation — only output valid JSON in the exact format below
 
 Your output must be in **clean JSON format** with the following structure:
 
 {
   "origin": "CITY",
   "destination": "CITY",
+  "airport_name": "AIRPORT NAME",
   "flight_number": "ABC123",
+  "boarding time": "HH:MM",
   "arrival_time": "HH:MM",
-  "arrival_date": "DDMMMYYYY",
-  "layovers": [
-    {
-      "location": "CITY",
-      "arrival_time": "HH:MM",
-      "departure_time": "HH:MM",
-      "duration_minutes": 120
-    }
-  ]
+  "arrival_date": "DD/MM/YYYY",
+ 
 }
 
 If any information is not available, leave the field as null.
@@ -65,16 +64,6 @@ def extract_price(text):
         return match.group(0)
     return None
 
-# def guess_price_range(text):
-#     text = text.lower()
-#     # For both restaurants and hotels
-#     if "$$$" in text or "fine dining" in text or "michelin" in text or "luxury" in text or "five-star" in text or "expensive" in text or "suite" in text or "penthouse" in text:
-#         return "$$$"
-#     if "$$" in text or "mid-range" in text or "bistro" in text or "popular" in text or "moderate" in text or "brasserie" in text or "boutique" in text or "modern" in text or "4-star" in text:
-#         return "$$"
-#     if "$" in text or "affordable" in text or "cheap" in text or "budget" in text or "fast food" in text or "pizza" in text or "diner" in text or "casual" in text or "hostel" in text or "basic" in text or "value" in text:
-#         return "$"
-#     return None
 
 def guess_price_range(text):
     text = text.lower()
@@ -107,21 +96,7 @@ def guess_price_range(text):
     
     return None
 
-
-# def categorize_by_price(results, is_restaurant=True):
-#     grouped = defaultdict(list)
-#     for res in results:
-#         price = extract_price(res.get('content', '')) or guess_price_range(res.get('content', '')) or guess_price_range(res.get('title', ''))
-#         if price == "$$$":
-#             grouped["Luxury"].append(res)
-#         elif price == "$$":
-#             grouped["Mid-Range"].append(res)
-#         elif price == "$":
-#             grouped["Cheap"].append(res)
-#         else:
-#             grouped["Mid-Range"].append(res)  # Default if no info
 #     return grouped
-
 def categorize_by_price(results, is_restaurant=True):
     grouped = defaultdict(list)
     for res in results:
@@ -164,12 +139,25 @@ You are given a set of **web search results** related to this destination. Use t
 ### 🧠 Hybrid Logic:
 
 - Categorize restaurants and hotels as Cheap, Mid-Range, and Luxury using price info or cues.
-- Show up to {top_k} recommendations per tier.
+- Show exactly {top_k} recommendations per tier.
+- If fewer than {top_k} valid links are available from search results for a category, you must estimate and include realistic suggestions using your own knowledge to fill the gap.
 - Show a clickable [Website Link] for each.
 - Use internal knowledge (Fallback LLM) only if web results for a tier are missing.
 
+Your task is to categorize restaurants and hotels into:
+- Cheap/Budget
+- Mid-Range
+- Luxury
+
+If no Cheap/Budget results appear in the search results, estimate them based on local culture, common knowledge, and general affordability patterns (e.g., food trucks, hostel chains, bakeries, etc).
+But incase that also fails then you must fallback to general affordable local options (e.g. food trucks, bakeries, hostels) using your own knowledge.
+
+Always return {top_k}, even if some are LLM-estimated
+
 ---
 """
+    
+
 
     grouped = {
         "restaurant": [],

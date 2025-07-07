@@ -1,0 +1,43 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*.pyo
+
+# Virtual environments and env files
+venv/
+backend/.env
+backend/.env.*
+
+# Python build artifacts
+*.egg-info/
+*.egg
+dist/
+build/
+
+# Logs
+*.log
+
+# Ignore debug image output
+debug_cropped.jpg
+
+# Test images (from anywhere)
+**/test_images/
+
+# Jupyter Notebook checkpoints
+.ipynb_checkpoints
+
+# Editor folders
+.vscode/
+.idea/
+
+# System files
+.DS_Store
+Thumbs.db
+
+# Docker files
+*.container
+*.pid
+*.tar
+
+# Custom files
+requirements-mainpc.txt
