@@ -22,6 +22,8 @@ You must:
 - NEVER guess—if something is unclear, return "Unknown"
 - Do not include extra explanation — only output valid JSON in the exact format below
 
+MUST NOT over-interpret general region names. If a ticket says 'HAWAII', do not substitute with nearby cities like 'Hawaiian Gardens'.
+
 Your output must be in **clean JSON format** with the following structure:
 
 {
