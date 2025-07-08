@@ -175,7 +175,14 @@ async def display_itinerary(
             prompt = build_fallback_prompt(destination, arrival_time, arrival_date, user_prefs, top_k)
 
         gemma_output = call_gemma(prompt)
-        return {"itinerary": gemma_output}
+        return {
+            "itinerary": gemma_output,
+            "city": destination,
+            "origin": structured_data.get("origin"),
+            "airport": airport,
+            "arrival_time": arrival_time
+        }
+
 
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
