@@ -144,6 +144,36 @@ You are given a set of **web search results** related to this destination. Use t
 - If fewer than {top_k} valid links are available from search results for a category, you must estimate and include realistic suggestions using your own knowledge to fill the gap.
 - Show a clickable [Website Link] for each.
 - Use internal knowledge (Fallback LLM) only if web results for a tier are missing.
+- For ONLY (not resturaunts hotels and rent a cars) general activity or POI (added by the user), include estimated visit time (e.g., “~2-3 hours”), and if available, user ratings and open hours (from the web).**
+
+
+- Read the search results carefully.
+- Group them into intelligent categories like (they will be seperate by commas as input already just use logic to name them **Cinemas**, **Daycares**, **Museums**, **Nature Trails**, **Markets**, etc., based on their content.
+- You must decide the category labels yourself based on relevance.
+- Always add a short emoji next to each category (e.g., 🎬 Cinemas, 🍼 Daycares, 🖼 Museums, 🥾 Outdoor Activities).
+- For each result, include:
+  - Title (bold)
+  - Short description (1-2 lines max)
+  - Estimated time needed to visit (like "~1-2 hours", or "30-45 mins")
+  - If content mentions open hours or ratings, include that
+  - If a website link is present, show it as `[Website Link](...)`
+
+Always use proper Markdown format.
+
+Example structure:
+
+#### 🎬 Cinemas
+- **Cineplex Paris** (~2-3 hours): Known for indie films. ⭐ 4.3/5. 🕘 Open daily 10am-11pm. [Website Link]
+
+---
+
+
+
+- Add price ranges for the catoarized restaurants and hotels using the web (price range in numerical values, currency of that specific country)
+- Unless skipped intentionlly , always include:
+- Restaurants
+- Hotels
+- Rental Cars
 
 Your task is to categorize restaurants and hotels into:
 - Cheap/Budget
