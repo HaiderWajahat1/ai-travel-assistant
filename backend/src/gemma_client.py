@@ -53,3 +53,34 @@ def call_gemma(prompt: str) -> dict:
         
     except Exception as e:
         return {"error": f"Gemma call failed: {str(e)}"}
+
+
+def extract_keywords_from_preferences(preferences: list[str]) -> list[str]:
+    from .gemma_client import call_gemma  # If not already imported locally
+
+    combined = " ".join(preferences)
+    prompt = f"""
+You're a smart AI travel assistant.
+
+Your task is to extract keywords or category topics from the following traveler preferences. These should be search-worthy topics like types of attractions, services, or activities.
+
+Examples:
+- If input is: "I want to try local beer and visit street art" → Output: beer tasting, street art
+- If input is: "I have a dog and want nature walks" → Output: pet-friendly places, nature walks
+- If input is: "interested in space science" → Output: science museum
+
+Only output a comma-separated list. Do NOT include explanations.
+
+Traveler said:
+\"\"\"{combined}\"\"\"
+"""
+
+    response = call_gemma(prompt)
+
+    # In case the LLM wraps it oddly
+    if isinstance(response, dict) and "output" in response:
+        raw_text = response["output"]
+    else:
+        raw_text = str(response)
+
+    return [x.strip() for x in raw_text.split(",") if x.strip()]

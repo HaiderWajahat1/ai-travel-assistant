@@ -7,6 +7,7 @@ from src.nlp_extractor import extract_location_info
 from src.gemma_client import call_gemma
 from config.prompts import build_fallback_prompt, build_live_itinerary_prompt, build_user_query_prompt
 from src.searx_client import search_searx
+from src.gemma_client import extract_keywords_from_preferences
 import traceback
 
 app = FastAPI()
@@ -82,7 +83,8 @@ async def display_itinerary(
             if "have accommodation" in lowered or "hotel is booked" in lowered or "no hotel" in lowered:
                 exclusion_flags["skip_hotels"] = True
             if "no food" in lowered or "don't want restaurants" in lowered:
-                exclusion_flags["skip_restaurants"] = True
+                exclusion_flags["skip_restaurants"] = True 
+
 
         # Step 1: OCR
         text = await extract_text_via_ocr_space(file)
@@ -95,6 +97,7 @@ async def display_itinerary(
         airport = structured_data.get("airport_name") or structured_data.get("airport_code")
         arrival_time = structured_data.get("arrival_time", "TBD")
         arrival_date = structured_data.get("arrival_date", "TBD")
+
 
         if destination:
             last_context["city"] = destination
@@ -139,6 +142,14 @@ async def display_itinerary(
 
         if not exclusion_flags["skip_rentals"]:
             search_results += search_searx(f"car rentals in {destination}", tag="rental", max_results=search_k)
+
+        # 🔍 Additional dynamic searches from LLM-extracted preferences
+        dynamic_keywords = extract_keywords_from_preferences(user_prefs)
+        for keyword in dynamic_keywords:
+            query = f"{keyword} in {destination}"
+            search_results += search_searx(query, max_results=search_k)
+            for r in search_results[-search_k:]:
+                r["category"] = "general"
 
 
         # Optional: Add simple category tagging for cheap results

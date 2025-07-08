@@ -274,6 +274,16 @@ Always return {top_k}, even if some are LLM-estimated
                 weather_link = r["url"]
                 break
     
+
+    if grouped["general"]:
+        prompt += "\n### 🔎 Additional Suggestions\n"
+        for result in grouped["general"][:top_k]:
+            prompt += f"- **{result.get('title', '')}**: {result.get('content', '')}\n"
+            if result.get("url"):
+                prompt += f"  [Website Link]({result['url']})\n"
+
+
+
     prompt += f"""
 
 ---
