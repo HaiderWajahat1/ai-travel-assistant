@@ -21,7 +21,7 @@ app.add_middleware(
 
 class TextInput(BaseModel):
     raw_text: str
-
+    top_k: int
 
 class AskRequest(BaseModel):
     user_query: str
@@ -108,32 +108,38 @@ async def display_itinerary(
         if not destination:
             raise HTTPException(status_code=400, detail="Destination not found in extracted data")
 
-        # # Step 3: Web search
-        # search_results = []
-        # if not exclusion_flags["skip_restaurants"]:
-        #     search_results += search_searx(f"best restaurants in {destination}", tag="restaurant", max_results=6)
-        # if not exclusion_flags["skip_hotels"]:
-        #     search_results += search_searx(f"best hotels in {destination}", tag="hotel", max_results=6)
-        # if not exclusion_flags["skip_rentals"]:
-        #     search_results += search_searx(f"car rentals in {destination}", tag="rental", max_results=4)
-
         # Step 3: Web search
         search_results = []
 
+        # if not exclusion_flags["skip_restaurants"]:
+        #     # Mid/Luxury
+        #     search_results += search_searx(f"best restaurants in {destination}", tag="restaurant", max_results=5)
+        #     # Cheap-specific
+        #     search_results += search_searx(f"cheap restaurants in {destination}", tag="restaurant", max_results=5)
+
+        # if not exclusion_flags["skip_hotels"]:
+        #     # Mid/Luxury
+        #     search_results += search_searx(f"best hotels in {destination}", tag="hotel", max_results=5)
+        #     # Cheap-specific
+        #     search_results += search_searx(f"budget hotels in {destination}", tag="hotel", max_results=5)
+
+        # if not exclusion_flags["skip_rentals"]:
+        #     search_results += search_searx(f"car rentals in {destination}", tag="rental", max_results=5)
+
+        multiplier = 2.5
+        search_k = int(top_k * multiplier)
+
         if not exclusion_flags["skip_restaurants"]:
-            # Mid/Luxury
-            search_results += search_searx(f"best restaurants in {destination}", tag="restaurant", max_results=5)
-            # Cheap-specific
-            search_results += search_searx(f"cheap restaurants in {destination}", tag="restaurant", max_results=5)
+            search_results += search_searx(f"best restaurants in {destination}", tag="restaurant", max_results=search_k)
+            search_results += search_searx(f"cheap restaurants in {destination}", tag="restaurant", max_results=search_k)
 
         if not exclusion_flags["skip_hotels"]:
-            # Mid/Luxury
-            search_results += search_searx(f"best hotels in {destination}", tag="hotel", max_results=5)
-            # Cheap-specific
-            search_results += search_searx(f"budget hotels in {destination}", tag="hotel", max_results=5)
+            search_results += search_searx(f"best hotels in {destination}", tag="hotel", max_results=search_k)
+            search_results += search_searx(f"budget hotels in {destination}", tag="hotel", max_results=search_k)
 
         if not exclusion_flags["skip_rentals"]:
-            search_results += search_searx(f"car rentals in {destination}", tag="rental", max_results=5)
+            search_results += search_searx(f"car rentals in {destination}", tag="rental", max_results=search_k)
+
 
         # Optional: Add simple category tagging for cheap results
         for item in search_results:

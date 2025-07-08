@@ -22,7 +22,6 @@ You must:
 - NEVER guess—if something is unclear, return "Unknown"
 - Do not include extra explanation — only output valid JSON in the exact format below
 
-MUST NOT over-interpret general region names. If a ticket says 'HAWAII', do not substitute with nearby cities like 'Hawaiian Gardens'.
 
 Your output must be in **clean JSON format** with the following structure:
 
@@ -267,12 +266,32 @@ Always return {top_k}, even if some are LLM-estimated
                     f"- **{name}**\n"
                     f"  [Website Link]({google_link})\n"
                 )
-
-    prompt += """
+    
+    weather_link = "https://weather.com/"
+    for r in search_results:
+        if "weather" in r.get("title", "").lower() or "forecast" in r.get("content", "").lower():
+            if r.get("url"):
+                weather_link = r["url"]
+                break
+    
+    prompt += f"""
 
 ---
 
 Now, using the **above search results first**, and your own knowledge *only when necessary*, generate a well-structured Markdown itinerary grouped by Cheap, Mid-Range, and Luxury for both restaurants and hotels. Do not hallucinate URLs or make up fake brands. Just show 'Website Link' for all URLs.
+
+### ☁️ Weather Forecast
+
+You must provide a weather forecast for the ARRIVAL CITY on the user's arrival date.
+
+- If weather data for that date is unavailable, give a forecast-style estimate based on current or seasonal conditions — but do **not** mention that it's based on today's date.
+- Always phrase the forecast as if it's for the arrival day.
+- If arrival time is available (e.g., morning, afternoon, night), tailor it accordingly.
+- Use temperature (°C or °F), condition (sunny, cloudy, rainy, etc.), and include any important notes.
+- End with the sentence:  
+  _For a more detailed or updated weekly forecast, see ({weather_link})._
+
+Be concise (1-2 lines max).
 """
     return prompt
 
