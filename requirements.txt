@@ -1,3 +1,4 @@
+# Backend dependencies
 fastapi
 uvicorn
 httpx
@@ -5,4 +6,6 @@ pydantic
 python-dotenv
 requests
 python-multipart
-
+# Front end dependencies
+streamlit
+requests

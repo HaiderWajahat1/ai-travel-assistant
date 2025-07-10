@@ -57,13 +57,20 @@ def format_travel_prompt(ocr_text: str):
 
 
 def extract_price(text):
+    """
+    Attempts to extract a numeric price (with currency) from free text.
+    Supports $, €, AED, PKR, INR, etc.
+    """
     match = re.search(
-        r"(\$\$?\$?)|from\s*\$\d+|starting at\s*\$\d+|\$\d+(\.\d{2})?",
-        text
+        r"(?:from|starting at)?\s*(?:~)?\s*(AED|USD|PKR|INR|₹|\$|€|£|Rs)\s?\d{2,6}(?:\.\d{1,2})?",
+        text,
+        re.IGNORECASE
     )
     if match:
-        return match.group(0)
+        return match.group(0).replace("USD", "$").replace("INR", "₹").replace("PKR", "PKR ")
     return None
+
+
 
 
 def guess_price_range(text):
@@ -137,7 +144,7 @@ You are given a set of **web search results** related to this destination. Use t
 
 ---
 
-### 🧠 Hybrid Logic:
+###  Hybrid Logic:
 
 - Categorize restaurants and hotels as Cheap, Mid-Range, and Luxury using price info or cues.
 - Show exactly {top_k} recommendations per tier.
@@ -150,7 +157,7 @@ You are given a set of **web search results** related to this destination. Use t
 - Read the search results carefully.
 - Group them into intelligent categories like (they will be seperate by commas as input already just use logic to name them **Cinemas**, **Daycares**, **Museums**, **Nature Trails**, **Markets**, etc., based on their content.
 - You must decide the category labels yourself based on relevance.
-- Always add a short emoji next to each category (e.g., 🎬 Cinemas, 🍼 Daycares, 🖼 Museums, 🥾 Outdoor Activities).
+- Always add a short emoji next to each category (e.g., 🎬 Cinemas, 🍼 Daycares, Museums, 🥾 Outdoor Activities).
 - For each result, include:
   - Title (bold)
   - Short description (1-2 lines max)
@@ -305,12 +312,14 @@ Always return {top_k}, even if some are LLM-estimated
                 break
     
 
-    if grouped["general"]:
+    # Only show 'Additional Suggestions' if user gave preferences and relevant results exist
+    if preferences and grouped["general"]:
         prompt += "\n### 🔎 Additional Suggestions\n"
         for result in grouped["general"][:top_k]:
             prompt += f"- **{result.get('title', '')}**: {result.get('content', '')}\n"
             if result.get("url"):
                 prompt += f"  [Website Link]({result['url']})\n"
+
 
 
 
@@ -328,8 +337,6 @@ You must provide a weather forecast for the ARRIVAL CITY on the user's arrival d
 - Always phrase the forecast as if it's for the arrival day.
 - If arrival time is available (e.g., morning, afternoon, night), tailor it accordingly.
 - Use temperature (°C or °F), condition (sunny, cloudy, rainy, etc.), and include any important notes.
-- End with the sentence:  
-  _For a more detailed or updated weekly forecast, see ({weather_link})._
 
 Be concise (1-2 lines max).
 """

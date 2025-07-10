@@ -9,9 +9,10 @@ city_df = pd.read_csv(CITY_FILE_PATH)
 CITY_LIST = city_df['city'].dropna().unique().tolist()
 
 def correct_city_name_dynamic(name: str, score_threshold: float = 85.0) -> str:
+    """
+    Attempts to correct a potentially misspelled city name using fuzzy matching.
+    Returns the best match if above threshold, otherwise returns the original.
+    """
     name = name.strip().title()
     match = process.extractOne(name, CITY_LIST, score_cutoff=score_threshold)
-    if match:
-        corrected_name, score, _ = match
-        return corrected_name
-    return name
+    return match[0] if match else name

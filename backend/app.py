@@ -1,14 +1,22 @@
+# Standard libs
+import traceback
+
+# Third-party
 from fastapi import FastAPI, UploadFile, Form, File, HTTPException
-from fastapi.responses import JSONResponse, PlainTextResponse
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
+
+# Local modules
 from src.ocr_engine import extract_text_via_ocr_space
 from src.nlp_extractor import extract_location_info
-from src.gemma_client import call_gemma
-from config.prompts import build_fallback_prompt, build_live_itinerary_prompt, build_user_query_prompt
+from src.gemma_client import call_gemma, extract_keywords_from_preferences
+from config.prompts import (
+    build_fallback_prompt,
+    build_live_itinerary_prompt,
+    build_user_query_prompt
+)
 from src.searx_client import search_searx
-from src.gemma_client import extract_keywords_from_preferences
-import traceback
+
 
 app = FastAPI()
 
@@ -21,6 +29,7 @@ app.add_middleware(
 )
 
 class TextInput(BaseModel):
+    """Input model for parsed OCR text."""
     raw_text: str
     top_k: int
 
@@ -36,54 +45,73 @@ last_context = {
 
 chat_history = []
 
-@app.post("/extract-ocr-text")
-async def extract_ocr_text_endpoint(file: UploadFile = File(...)):
-    try:
-        text = await extract_text_via_ocr_space(file)
-        if not text:
-            raise HTTPException(status_code=500, detail="OCR failed to extract text")
-        return {"ocr_text": text}
-    except Exception as e:
-        print("🚨 OCR endpoint error:")
-        traceback.print_exc()
-        raise HTTPException(status_code=500, detail=f"OCR extraction error: {str(e)}")
-
-
-@app.post("/parse-ocr-text")
-async def parse_ocr_text_endpoint(data: TextInput):
-    """
-    Accept raw OCR text and return structured fields via NLP (Gemma).
-    """
-    try:
-        result = extract_location_info(data.raw_text)
-        return {"parsed_info": result}
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=f"NLP parsing error: {str(e)}")
-
-
 @app.post("/display-itinerary")
 async def display_itinerary(
     file: UploadFile = File(...),
     preferences: str = Form(""),
     top_k: int = Form(3)
 ):
+    """
+    Generates a personalized travel itinerary based on the uploaded ticket and user preferences.
+
+    Process Flow:
+    - Performs OCR on the uploaded image to extract text.
+    - Uses an LLM to extract structured travel information (e.g., destination, airport, arrival time/date).
+    - Applies preference-based filters (e.g., skip hotels, rentals, food).
+    - Performs live web searches for relevant POIs using extracted keywords and destination.
+    - Builds a prompt and generates an itinerary using Gemma LLM.
+
+    Args:
+        file (UploadFile): Image file of the boarding pass or travel ticket.
+        preferences (str): Comma-separated freeform preferences (e.g., "hiking, no food, own car").
+        top_k (int): Number of suggestions to include per category (used for prompt generation).
+
+    Returns:
+        dict: A response containing:
+            - `itinerary` (str): Generated text-based itinerary.
+            - `city` (str): Destination city.
+            - `origin` (str): Departure city.
+            - `airport` (str): Destination airport name or code.
+            - `arrival_time` (str): Parsed arrival time (if available).
+    """
     try:
         user_prefs = [p.strip() for p in preferences.split(",") if p.strip()]
 
         exclusion_flags = {
-            "skip_hotels": False,
             "skip_rentals": False,
+            "skip_hotels": False,
             "skip_restaurants": False
         }
 
         for pref in user_prefs:
             lowered = pref.lower()
-            if "have a car" in lowered or ("rental" in lowered and "not needed" in lowered):
+            # Rentals - Detect if user has a car or doesn't need rental
+            if any(x in lowered for x in [
+                "have a car","has a car", "own car", "my car", "rented a car", "already have car", 
+                "don't need rental", "rental not needed", "rental sorted", "car sorted", 
+                "bringing my own car", "using personal car", "self-driving", "car arranged"
+            ]):
                 exclusion_flags["skip_rentals"] = True
-            if "have accommodation" in lowered or "hotel is booked" in lowered or "no hotel" in lowered:
+
+            # Hotels - Detect if user has accommodation
+            if any(x in lowered for x in [
+                "have accommodation", "hotel is booked", "already booked hotel", 
+                "no hotel", "don't need hotel", "staying at", "staying with", 
+                "place to stay", "friend's place", "airbnb", "lodging sorted", 
+                "arranged stay", "accommodation sorted", "sleeping at relative's", 
+                "guesthouse booked", "residence arranged", "living with someone"
+            ]):
                 exclusion_flags["skip_hotels"] = True
-            if "no food" in lowered or "don't want restaurants" in lowered:
-                exclusion_flags["skip_restaurants"] = True 
+
+            # Restaurants - Detect if user doesn't want food suggestions
+            if any(x in lowered for x in [
+                "no food", "skip meals", "don't want restaurants", "bring my own food", 
+                "meals are sorted", "eating at hotel", "already have food", "eating with family", 
+                "self-catering", "meal plan included", "staying with someone who'll feed me", 
+                "homemade meals", "not interested in dining out", "food taken care of", 
+                "will cook", "will order in", "on a diet", "not eating out"
+            ]):
+                exclusion_flags["skip_restaurants"] = True
 
 
         # Step 1: OCR
@@ -113,22 +141,6 @@ async def display_itinerary(
 
         # Step 3: Web search
         search_results = []
-
-        # if not exclusion_flags["skip_restaurants"]:
-        #     # Mid/Luxury
-        #     search_results += search_searx(f"best restaurants in {destination}", tag="restaurant", max_results=5)
-        #     # Cheap-specific
-        #     search_results += search_searx(f"cheap restaurants in {destination}", tag="restaurant", max_results=5)
-
-        # if not exclusion_flags["skip_hotels"]:
-        #     # Mid/Luxury
-        #     search_results += search_searx(f"best hotels in {destination}", tag="hotel", max_results=5)
-        #     # Cheap-specific
-        #     search_results += search_searx(f"budget hotels in {destination}", tag="hotel", max_results=5)
-
-        # if not exclusion_flags["skip_rentals"]:
-        #     search_results += search_searx(f"car rentals in {destination}", tag="rental", max_results=5)
-
         multiplier = 2.5
         search_k = int(top_k * multiplier)
 
@@ -143,7 +155,7 @@ async def display_itinerary(
         if not exclusion_flags["skip_rentals"]:
             search_results += search_searx(f"car rentals in {destination}", tag="rental", max_results=search_k)
 
-        # 🔍 Additional dynamic searches from LLM-extracted preferences
+        # Additional dynamic searches from LLM-extracted preferences
         dynamic_keywords = extract_keywords_from_preferences(user_prefs)
         for keyword in dynamic_keywords:
             query = f"{keyword} in {destination}"
@@ -152,14 +164,12 @@ async def display_itinerary(
                 r["category"] = "general"
 
 
-        # Optional: Add simple category tagging for cheap results
+        # Add simple category tagging for cheap results
         for item in search_results:
             title = item.get("title", "").lower()
             if "cheap" in title or "budget" in title or "affordable" in title:
                 item["category_hint"] = "cheap"
 
-
-        # ✅ Updated logic: more robust result check
         has_results = len(search_results) > 0
 
         if has_results:
@@ -191,6 +201,23 @@ async def display_itinerary(
 
 @app.post("/ask")
 def ask_endpoint(req: AskRequest):
+    """
+    Handles user Q&A based on previous travel context and live web search results.
+
+    - Uses previous itinerary context (destination, arrival time, airport) to enhance the user's query.
+    - Performs a live search using SearxNG.
+    - Sends the query, search results, and chat history to Gemma for reasoning and response.
+    - Stores chat history and summarizes old messages if more than 5 interactions.
+
+    Args:
+        req (AskRequest): A JSON body with a single field: `user_query` (str).
+
+    Returns:
+        dict: A response containing:
+            - `answer` (str): Generated answer from Gemma.
+            - `history` (list): The last 5 Q&A interactions.
+            - `summary` (str): Summary of earlier interactions (if any).
+    """
     user_query = req.user_query
     city = last_context.get("city")
     airport = last_context.get("airport")
