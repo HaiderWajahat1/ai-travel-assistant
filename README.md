@@ -114,13 +114,12 @@ curl -X POST http://localhost:8000/display-itinerary ...
 
 ## 📸 Demo Screenshot
 
-*(Optional — add one here if you have it)*
+
 
 ---
 
 ## 🧼 Dev Notes
 
-* Frontend & backend use separate `requirements.txt`
 * Chat history is stored in session state
 * Uses Folium with colored markers and route lines
 * Prompts are dynamically generated to guide LLM responses
@@ -130,8 +129,6 @@ curl -X POST http://localhost:8000/display-itinerary ...
 
 ## ❗ Limitations
 
-* OCR quality may vary depending on image clarity
-* SearxNG may return occasional noisy results
 * Time zone logic and flight number verification are not yet included
 * Currently English-only
 
