@@ -16,8 +16,18 @@ GEMMA_API_URL = config["GEMMA_API_URL"]
 
 def call_gemma(prompt: str) -> dict:
     """
-    Sends a prompt to the Gemma 3 27B LLM API and parses the response.
-    Tries to return JSON. If not possible, returns raw output in 'output' key.
+    Sends a prompt to the Gemma 3 27B LLM API and returns the model's response.
+
+    This function sends a structured request to the Gemma API using a user prompt.
+    If the response is JSON-like, it attempts to parse and return it. Otherwise,
+    it returns the raw text inside an 'output' key.
+
+    Args:
+        prompt (str): The prompt string to send to the Gemma model.
+
+    Returns:
+        dict: A dictionary containing either parsed JSON or the raw text output.
+              If an error occurs, returns {'error': <message>}.
     """
     headers = {
         "Content-Type": "application/json",
@@ -57,8 +67,18 @@ def call_gemma(prompt: str) -> dict:
 
 def extract_keywords_from_preferences(preferences: list[str]) -> list[str]:
     """
-    Sends preferences to Gemma to extract search-worthy keywords or categories.
-    Returns a list of strings like 'street art', 'hiking', etc.
+    Extracts concise, search-worthy keywords from a list of user preferences
+    using the Gemma LLM.
+
+    This function combines the user's preferences into a single prompt and
+    queries the Gemma model to return keywords as a comma-separated list.
+
+    Args:
+        preferences (list[str]): A list of user-provided preferences such as
+                                 "food", "hiking", "no hotel", etc.
+
+    Returns:
+        list[str]: A list of extracted keywords (e.g., ["street art", "cafes", "hiking"]).
     """
     combined = " ".join(preferences)
     prompt = f"""

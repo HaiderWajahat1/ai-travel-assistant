@@ -10,9 +10,27 @@ LISTICLE_KEYWORDS = ["top", "best"]
 
 def search_searx(query: str, categories="general", language="en", max_results=6, tag=None):
     """
-    Sends a search query to the SearxNG instance.
-    Filters out generic listicle results like 'Top 10 ...' and adds category tags.
-    Returns a list of search result dicts.
+    Sends a search query to a SearxNG instance and retrieves filtered web results.
+
+    The function uses HTTP GET to perform a meta search. It filters out generic
+    listicle-style results (e.g., "Top 10 things to do") and optionally tags each result
+    with a custom category. If no meaningful results are found, fallback raw results are returned.
+
+    Args:
+        query (str): The search query string.
+        categories (str, optional): Comma-separated Searx categories to target (e.g., "news,images").
+        language (str, optional): ISO language code for search results (default is "en").
+        max_results (int, optional): Maximum number of search results to return (default is 6).
+        tag (str, optional): Optional tag/category to assign to the returned results.
+
+    Returns:
+        list[dict]: A list of result dictionaries, each containing:
+            - title (str): The result title.
+            - url (str): The result URL.
+            - content (str): A short description or snippet.
+            - category (str): Either the provided tag or "general".
+        
+        If an error occurs, a single-item list with an error message is returned.
     """
     headers = {
         "User-Agent": "Mozilla/5.0",

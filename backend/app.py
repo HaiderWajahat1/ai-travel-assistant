@@ -4,7 +4,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 
 # Local modules
-from src.ocr_engine import extract_text_via_ocr_space
+from src.ocr_engine import extract_text_via_ocr
 from src.nlp_extractor import extract_location_info
 from src.gemma_client import call_gemma, extract_keywords_from_preferences
 from config.prompts import (
@@ -112,7 +112,7 @@ async def display_itinerary(
 
 
         # Step 1: OCR
-        text = await extract_text_via_ocr_space(file)
+        text = await extract_text_via_ocr(file)
         if not text:
             raise HTTPException(status_code=500, detail="OCR failed to extract text")
 
