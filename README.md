@@ -105,21 +105,6 @@ ai-travel-planner/
 │   └── demo.gif                # Demo animation (used in README)
 
 
-## 🧪 API Endpoints
-
-* `POST /display-itinerary`
-  Accepts file + preferences, returns structured markdown itinerary
-
-* `POST /ask`
-  Accepts a question (e.g. “What’s the weather like?”), returns LLM answer
-
-Test with:
-
-```bash
-curl -X POST http://localhost:8000/display-itinerary ...
-```
-
-
 ## 🧼 Dev Notes
 
 * Chat history is stored in session state
