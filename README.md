@@ -65,25 +65,21 @@ pip install -r requirements.txt
 streamlit run app.py
 ```
 
----
-
 ## 🧭 How It Works
 
-1. User uploads a travel ticket (JPG/PNG)
-2. OCR extracts raw text (e.g. flight number, airport, dates)
-3. LLM parses and corrects this into structured fields
-4. Preferences are checked (e.g. "skip hotel", "already have food")
-5. Relevant live data is pulled using SearxNG
-6. LLM formats everything into a beautiful, markdown itinerary
-7. User can optionally chat with the planner about their trip
+1. User uploads a travel ticket (JPG/PNG)  
+2. OCR extracts raw text (e.g. flight number, airport, dates)  
+3. LLM parses and corrects this into structured fields  
+4. Preferences are checked (e.g. "skip hotel", "already have food")  
+5. Relevant live data is pulled using SearxNG  
+6. LLM formats everything into a beautiful, markdown itinerary  
+7. User can optionally chat with the planner about their trip  
 
-```markdown
 ---
 
 ## 📂 Project Structure
 
-```
-
+```text
 ai-travel-planner/
 ├── backend/
 │   ├── app.py                  # Main FastAPI application
@@ -108,7 +104,6 @@ ai-travel-planner/
 │   ├── requirements.txt        # Frontend dependencies
 │   └── demo.gif                # Demo animation (used in README)
 
----
 
 ## 🧪 API Endpoints
 
