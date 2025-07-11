@@ -112,9 +112,6 @@ ai-travel-planner/
 │   ├── requirements.txt        # Frontend dependencies
 │   └── demo.gif                # Demo animation (used in README)
 
-```
-```
-
 ---
 
 ## 🧪 API Endpoints
