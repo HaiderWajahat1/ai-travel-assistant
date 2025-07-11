@@ -4,6 +4,10 @@ An intelligent travel assistant that takes a simple boarding pass or ticket imag
 
 ---
 
+![Demo](frontend/demo.gif)
+
+---
+
 ## 🔍 Features
 
 - OCR-based ticket scanning and location extraction  
@@ -110,13 +114,6 @@ Test with:
 curl -X POST http://localhost:8000/display-itinerary ...
 ```
 
----
-
-## 📸 Demo Screenshot
-
-
-
----
 
 ## 🧼 Dev Notes
 
@@ -124,6 +121,7 @@ curl -X POST http://localhost:8000/display-itinerary ...
 * Uses Folium with colored markers and route lines
 * Prompts are dynamically generated to guide LLM responses
 * Additional results are filtered for quality
+* Python version is 3.11.13
 
 ---
 
