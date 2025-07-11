@@ -79,7 +79,14 @@ streamlit run app.py
 
 ---
 
+Here’s the full **copy-pastable Markdown block** exactly as seen in your screenshot:
+
+---
+
+```markdown
 ## 📂 Project Structure
+
+```
 
 ai-travel-planner/
 ├── backend/
@@ -93,7 +100,7 @@ ai-travel-planner/
 │   ├── data/
 │   │   └── worldcities.csv     # City name reference dataset
 │   └── src/
-│       ├── __init__.py
+│       ├── **init**.py
 │       ├── gemma.py            # LLM API logic
 │       ├── ocr.py              # OCR logic (OCR.Space + Azure fallback)
 │       ├── nlp.py              # NLP + structured info extraction
@@ -105,6 +112,8 @@ ai-travel-planner/
 │   ├── requirements.txt        # Frontend dependencies
 │   └── demo.gif                # Demo animation (used in README)
 
+```
+```
 
 ---
 
