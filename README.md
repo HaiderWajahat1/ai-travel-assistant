@@ -77,12 +77,6 @@ streamlit run app.py
 6. LLM formats everything into a beautiful, markdown itinerary
 7. User can optionally chat with the planner about their trip
 
----
-
-Here’s the full **copy-pastable Markdown block** exactly as seen in your screenshot:
-
----
-
 ```markdown
 ## 📂 Project Structure
 
@@ -100,7 +94,7 @@ ai-travel-planner/
 │   ├── data/
 │   │   └── worldcities.csv     # City name reference dataset
 │   └── src/
-│       ├── **init**.py
+│       ├── __init__.py
 │       ├── gemma.py            # LLM API logic
 │       ├── ocr.py              # OCR logic (OCR.Space + Azure fallback)
 │       ├── nlp.py              # NLP + structured info extraction
