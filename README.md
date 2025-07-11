@@ -81,22 +81,30 @@ streamlit run app.py
 
 ## 📂 Project Structure
 
-```txt
-.
+ai-travel-planner/
 ├── backend/
-│   ├── app.py              # FastAPI routes
-│   ├── src/
-│   │   ├── ocr_engine.py
-│   │   ├── gemma_client.py
-│   │   ├── searx_client.py
-│   │   └── city_corrector.py
-│   └── config/prompts.py   # Prompt engineering layer
+│   ├── app.py                  # Main FastAPI application
+│   ├── requirements.txt        # Backend dependencies
+│   ├── .env                    # Environment variables (not tracked)
+│   ├── .env.example            # Template for env vars
+│   ├── config/
+│   │   ├── prompts.py          # Prompt templates for LLM
+│   │   └── settings.yaml       # Configurable constants and API URLs
+│   ├── data/
+│   │   └── worldcities.csv     # City name reference dataset
+│   └── src/
+│       ├── __init__.py
+│       ├── gemma.py            # LLM API logic
+│       ├── ocr.py              # OCR logic (OCR.Space + Azure fallback)
+│       ├── nlp.py              # NLP + structured info extraction
+│       ├── searx.py            # Web search via SearxNG
+│       └── cities.py           # Fuzzy city name correction
+│
 ├── frontend/
-│   ├── app.py              # Streamlit frontend
-│   └── route_map.py        # Folium map rendering
-├── data/
-│   └── worldcities.csv     # For fuzzy city correction
-```
+│   ├── app.py                  # Streamlit frontend
+│   ├── requirements.txt        # Frontend dependencies
+│   └── demo.gif                # Demo animation (used in README)
+
 
 ---
 
