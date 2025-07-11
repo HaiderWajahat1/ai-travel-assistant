@@ -4,15 +4,15 @@ from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 
 # Local modules
-from src.ocr_engine import extract_text_via_ocr
-from src.nlp_extractor import extract_location_info
-from src.gemma_client import call_gemma, extract_keywords_from_preferences
+from src.ocr import extract_text_via_ocr
+from src.nlp import extract_location_info
+from src.gemma import call_gemma, extract_keywords_from_preferences
 from config.prompts import (
     build_fallback_prompt,
     build_live_itinerary_prompt,
     build_user_query_prompt
 )
-from src.searx_client import search_searx
+from src.searx import search_searx
 
 
 app = FastAPI()

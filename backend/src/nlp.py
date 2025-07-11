@@ -1,6 +1,6 @@
-from .gemma_client import call_gemma
+from src.gemma import call_gemma
 from config.prompts import format_travel_prompt
-from src.city_corrector import correct_city_name_dynamic
+from src.cities import correct_city_name_dynamic
 
 def extract_location_info(text: str) -> dict:
     """

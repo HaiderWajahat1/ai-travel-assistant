@@ -2,7 +2,7 @@ import streamlit as st
 import requests
 import re
 from streamlit_folium import st_folium
-from route_map import build_basic_route_map
+from route import build_basic_route_map
 
 st.set_page_config(page_title="AI Travel Planner", layout="wide")
 st.markdown("""
