@@ -2,12 +2,17 @@ import os
 import httpx
 import json
 import re
+import yaml
 from dotenv import load_dotenv
 
 load_dotenv()
 
+# Load YAML config
+with open("config/settings.yaml", "r") as f:
+    config = yaml.safe_load(f)
+
 GEMMA_API_KEY = os.getenv("GEMMA_API_KEY")
-GEMMA_API_URL = "https://generativelanguage.googleapis.com/v1beta/models/gemma-3-27b-it:generateContent"
+GEMMA_API_URL = config["GEMMA_API_URL"]
 
 def call_gemma(prompt: str) -> dict:
     """

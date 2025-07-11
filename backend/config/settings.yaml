@@ -1,0 +1,6 @@
+AZURE_CV_ENDPOINT: "https://ocr-travel.cognitiveservices.azure.com/"
+GEMMA_API_URL: "https://generativelanguage.googleapis.com/v1beta/models/gemma-3-27b-it:generateContent"
+SEARX_API_URL: "http://127.0.0.1:4000/search"
+OCR_SPACE_API_URL: "https://api.ocr.space/parse/image"
+Model Name: "gemma-3-27b-it"
+Model Type: "gemma"

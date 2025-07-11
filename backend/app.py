@@ -1,6 +1,3 @@
-# Standard libs
-import traceback
-
 # Third-party
 from fastapi import FastAPI, UploadFile, Form, File, HTTPException
 from fastapi.middleware.cors import CORSMiddleware

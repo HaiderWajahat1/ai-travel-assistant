@@ -1,6 +1,11 @@
 import httpx
+import yaml
 
-SEARX_URL = "http://127.0.0.1:4000/search"
+# Load YAML config
+with open("config/settings.yaml", "r") as f:
+    config = yaml.safe_load(f)
+
+SEARX_URL = config["SEARX_API_URL"]
 LISTICLE_KEYWORDS = ["top", "best"]
 
 def search_searx(query: str, categories="general", language="en", max_results=6, tag=None):
