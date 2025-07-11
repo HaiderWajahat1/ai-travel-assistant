@@ -78,6 +78,8 @@ streamlit run app.py
 7. User can optionally chat with the planner about their trip
 
 ```markdown
+---
+
 ## 📂 Project Structure
 
 ```
