@@ -142,12 +142,6 @@ curl -X POST http://localhost:8000/display-itinerary ...
 
 ---
 
-## 🧠 Status
-
-> This project is in its **testing phase**. It uses **free public APIs** (Gemma, OCR.Space, etc.), so performance may vary. Ideal for personal use, demos, and future scaling — not production-ready yet.
-
----
-
 ## 🐳 Docker Setup (Optional)
 
 You can run the entire project with Docker (both backend and frontend) using `docker-compose`.
@@ -211,3 +205,8 @@ python -m streamlit --version
 
 ---
 
+## 🧠 Status
+
+> This project is in its **testing phase**. It uses **free public APIs** (Gemma, OCR.Space, etc.), so performance may vary. Ideal for personal use, demos, and future scaling — not production-ready yet.
+
+---
