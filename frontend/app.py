@@ -69,7 +69,7 @@ if not st.session_state.is_generating:
         }
         data = {"preferences": free_prefs, "top_k": num_suggestions}
         with st.spinner("🧭 Generating itinerary..."):
-            resp = requests.post("http://backend:8000/display-itinerary", files=files, data=data)
+            resp = requests.post("http://localhost:8000/display-itinerary", files=files, data=data)
         if resp.ok:
             resp_data = resp.json()
             st.session_state["itinerary_origin"] = resp_data.get("origin", "")
@@ -116,7 +116,7 @@ if st.session_state.itinerary:
 
     if submitted and user_query:
         with st.spinner("Thinking..."):
-            resp = requests.post("http://backend:8000/ask", json={"user_query": user_query})
+            resp = requests.post("http://localhost:8000/ask", json={"user_query": user_query})
         if resp.ok:
             result = resp.json()
             st.session_state.chat_answer = result.get("answer", "")

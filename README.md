@@ -148,3 +148,66 @@ curl -X POST http://localhost:8000/display-itinerary ...
 
 ---
 
+## 🐳 Docker Setup (Optional)
+
+You can run the entire project with Docker (both backend and frontend) using `docker-compose`.
+
+### 📁 Project Structure (Docker-Aware)
+
+Make sure your folder contains:
+
+```
+ai-travel-planner/
+├── backend/
+│   ├── app.py
+│   ├── Dockerfile
+│   └── requirements.txt
+├── frontend/
+│   ├── app.py
+│   ├── Dockerfile
+│   └── requirements.txt
+└── docker-compose.yml
+```
+
+---
+
+### ▶️ How to Run
+
+1. Make sure Docker is installed and running
+2. From the root of the project, run:
+
+```bash
+docker compose up --build
+```
+
+This will:
+
+* Start the FastAPI backend on `http://localhost:8000`
+* Start the Streamlit frontend on `http://localhost:8501`
+
+---
+
+### ✅ Access
+
+* **Frontend UI:** [http://localhost:8501](http://localhost:8501)
+* **Backend API Docs:** [http://localhost:8000/docs](http://localhost:8000/docs)
+
+---
+
+### 🧪 Check Streamlit Version (inside container)
+
+```bash
+docker compose exec frontend bash
+python -m streamlit --version
+```
+
+---
+
+### 🔧 Notes
+
+* If `use_container_width` or other features fail, ensure Streamlit in Docker is up to date (`1.35.0+`)
+* If SearxNG or any external API fails in Docker, make sure it's publicly reachable or properly routed via `host.docker.internal` or a live URL
+* Use `.env` and `settings.yaml` carefully — Docker doesn't see files ignored by `.dockerignore` unless passed via `env_file:` or hardcoded
+
+---
+
