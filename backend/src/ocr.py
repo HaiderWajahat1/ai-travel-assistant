@@ -6,6 +6,10 @@ import unicodedata
 from fastapi import UploadFile
 from typing import Optional
 from dotenv import load_dotenv
+from src.logger import get_logger
+
+# Initialize logger
+logger = get_logger(__name__)
 
 # Load environment variables and YAML config
 load_dotenv()
@@ -17,6 +21,7 @@ OCR_SPACE_API_KEY = os.getenv("OCR_SPACE_API_KEY")
 OCR_SPACE_API_URL = config["OCR_SPACE_API_URL"]
 AZURE_CV_ENDPOINT = config["AZURE_CV_ENDPOINT"]
 AZURE_CV_API_KEY = os.getenv("AZURE_CV_API_KEY")
+
 
 def clean_azure_ocr(text: str) -> str:
     """
@@ -59,13 +64,14 @@ async def extract_via_ocr_space(file: UploadFile) -> Optional[str]:
         result = response.json()
         parsed = result.get("ParsedResults", [])
         if parsed and parsed[0].get("ParsedText", "").strip():
-            print("📄 OCR.Space Output:\n", parsed[0]["ParsedText"])
+            logger.info("OCR.Space Output:\n%s", parsed[0]["ParsedText"])
             return parsed[0]["ParsedText"].strip()
         return None
 
     except Exception as e:
-        print("OCR.Space error:", repr(e))
+        logger.error("OCR.Space error: %s", repr(e))
         return None
+
 
 async def extract_via_azure_ocr(file: UploadFile) -> Optional[str]:
     """
@@ -78,7 +84,7 @@ async def extract_via_azure_ocr(file: UploadFile) -> Optional[str]:
         Optional[str]: The cleaned extracted text, or None if extraction fails.
     """
     if not AZURE_CV_API_KEY or not AZURE_CV_ENDPOINT:
-        print("Missing Azure OCR key or endpoint in .env")
+        logger.warning("Missing Azure OCR key or endpoint in .env")
         return None
 
     try:
@@ -103,15 +109,16 @@ async def extract_via_azure_ocr(file: UploadFile) -> Optional[str]:
 
         full_text = "\n".join(lines).strip()
         cleaned = clean_azure_ocr(full_text)
-        print("🧾 Azure OCR Output:\n", cleaned)
+        logger.info("Azure OCR Output:\n%s", cleaned)
         return cleaned if cleaned else None
 
     except httpx.HTTPStatusError as e:
-        print("HTTP error from Azure OCR:", e.response.status_code, e.response.text)
+        logger.error("HTTP error from Azure OCR: %s %s", e.response.status_code, e.response.text)
     except Exception as e:
-        print("Unhandled Azure OCR exception:", repr(e))
+        logger.error("Unhandled Azure OCR exception: %s", repr(e))
 
     return None
+
 
 async def extract_text_via_ocr(file: UploadFile) -> Optional[str]:
     """
@@ -125,9 +132,8 @@ async def extract_text_via_ocr(file: UploadFile) -> Optional[str]:
         Optional[str]: The final extracted and cleaned text, or None if both methods fail.
     """
     if OCR_SPACE_API_KEY not in [None, "", "null", "None"]:
-        print("🔍 Using OCR.Space")
+        logger.info("Using OCR.Space")
         return await extract_via_ocr_space(file)
     else:
-        print("🧭 Falling back to Azure OCR")
+        logger.info("Falling back to Azure OCR")
         return await extract_via_azure_ocr(file)
-

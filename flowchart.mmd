@@ -1,0 +1,48 @@
+---
+config:
+  theme: default
+  layout: td
+---
+
+flowchart TD
+
+%% /display-itinerary Flow
+A["User Uploads Ticket"] --> B["/display-itinerary"]
+B --> C["OCR + Cleanup"]
+C --> D["Gemma: Extract Travel Info + Edge Distance"]
+D --> E{"Preferences?"}
+
+E -- No --> F["Skip to Prompt"]
+E -- Yes --> G["Gemma: Extract Keywords"]
+G --> H["SearxNG: Search POIs, Hotels, etc."]
+F --> H
+
+H --> I{"Results Found?"}
+I -- Yes --> J["Build Prompt with Results"]
+I -- No --> K["Fallback Prompt"]
+J --> L["Generate & Return Itinerary"]
+K --> L
+
+%% /ask Flow (Compact)
+L --> M["/ask → Context + Query"]
+M --> N["Searx + Build Prompt"]
+N --> O["Gemma → Answer"]
+O --> P["Return Response"]
+
+%% 🎨 Class Definitions
+classDef input fill:#81d4fa,stroke:#29b6f6,color:#000;
+classDef process fill:#fffde7,stroke:#fbc02d,color:#000;
+classDef llm fill:#f8bbd0,stroke:#f06292,color:#000;
+classDef external fill:#fff59d,stroke:#fdd835,color:#000;
+classDef decision fill:#ffab91,stroke:#ff7043,color:#000;
+classDef output fill:#c5e1a5,stroke:#8bc34a,color:#000;
+
+
+
+%% 🏷️ Assign Classes
+class A,B,M input
+class C,F,J,K process
+class D,G,O llm
+class H,N external
+class E,I decision
+class L,P output

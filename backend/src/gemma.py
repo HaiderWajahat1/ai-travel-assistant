@@ -4,6 +4,10 @@ import json
 import re
 import yaml
 from dotenv import load_dotenv
+from src.logger import get_logger
+
+# Initialize logger
+logger = get_logger(__name__)
 
 load_dotenv()
 
@@ -47,7 +51,7 @@ def call_gemma(prompt: str) -> dict:
         response = httpx.post(GEMMA_API_URL, headers=headers, json=payload, timeout=60)
         response.raise_for_status()
         content = response.json()["candidates"][0]["content"]["parts"][0]["text"].strip()
-        print("\nGEMMA RAW OUTPUT:\n", content)
+        logger.info("GEMMA RAW OUTPUT:\n%s", content)
 
         if not content:
             return {"error": "Empty response from Gemma"}
@@ -59,9 +63,11 @@ def call_gemma(prompt: str) -> dict:
         try:
             return json.loads(content)
         except json.JSONDecodeError:
+            logger.warning("Gemma response was not valid JSON. Returning raw content.")
             return {"output": content}
 
     except Exception as e:
+        logger.error("Gemma call failed: %s", str(e))
         return {"error": f"Gemma call failed: {str(e)}"}
 
 
