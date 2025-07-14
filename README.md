@@ -4,7 +4,7 @@ An intelligent travel assistant that takes a simple boarding pass or ticket imag
 
 ---
 
-![Demo](frontend/demo.gif)
+![Demo](frontend/assets/demo.gif)
 
 ---
 
