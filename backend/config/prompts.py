@@ -333,10 +333,21 @@ Now, using the **above search results first**, and your own knowledge *only when
 
 You must provide a weather forecast for the ARRIVAL CITY on the user's arrival date.
 
-- If weather data for that date is unavailable, give a forecast-style estimate based on current or seasonal conditions — but do **not** mention that it's based on today's date.
-- Always phrase the forecast as if it's for the arrival day.
-- If arrival time is available (e.g., morning, afternoon, night), tailor it accordingly.
-- Use temperature (°C or °F), condition (sunny, cloudy, rainy, etc.), and include any important notes.
+First, attempt to use web search results for real-time or upcoming weather forecasts if available for that date.
+
+If the date is too far in the future or already past, or if weather data is missing, give a plausible seasonal estimate instead.
+
+Never mention that the forecast is based on seasonal averages or that live data was unavailable.
+
+Tailor the forecast based on time of arrival if known (e.g., morning, afternoon, evening).
+
+Use a temperature range (°C or °F) when using seasonal estimates, and include general conditions (sunny, cloudy, rainy, etc.) plus any key notes (e.g., humid, windy, etc.).
+
+Examples:
+
+“Expect a cool, cloudy evening in Berlin (10-14°C), with occasional light showers.”
+
+“Warm and sunny afternoon in Bangkok (30-33°C), great for exploring outdoor markets.”
 
 Be concise (1-2 lines max).
 """
