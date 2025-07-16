@@ -1,8 +1,18 @@
 import streamlit as st
 import requests
-import re
 from streamlit_folium import st_folium
 from route import build_basic_route_map
+
+### 🆕 PDF-related imports
+from reportlab.lib.pagesizes import letter
+from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, PageBreak, Image, Flowable
+from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
+from reportlab.lib.enums import TA_CENTER, TA_LEFT
+from reportlab.lib.units import inch
+from io import BytesIO
+from datetime import datetime
+import re
+import os
 
 st.set_page_config(page_title="AI Travel Planner", layout="wide")
 st.markdown("""
@@ -14,6 +24,107 @@ st.markdown("""
 
 def format_links(text):
     return re.sub(r'\[([^\]]+)\]\((http[^\)]+)\)', r'[Website Link](\2)', text)
+
+class LogoRightCorner(Flowable):
+    def __init__(self, path, size=0.6 * inch):
+        super().__init__()
+        self.img_path = path
+        self.width = size
+        self.height = size
+
+    def draw(self):
+        self.canv.drawImage(self.img_path, self.canv._pagesize[0] - self.width - 40, self.canv._pagesize[1] - self.height - 30, width=self.width, height=self.height, mask='auto')
+
+def generate_pdf(itinerary_text: str, destination: str = "", logo_path: str = "assets/logo.png") -> bytes:
+    buffer = BytesIO()
+
+    safe_destination = re.sub(r'[^\w\- ]+', '', destination).replace(" ", "_").lower()
+
+    # Prepare styles
+    styles = getSampleStyleSheet()
+    styles.add(ParagraphStyle(name='CoverTitle', fontSize=28, alignment=TA_CENTER, spaceAfter=20, fontName='Helvetica-Bold'))
+    styles.add(ParagraphStyle(name='CoverSubtitle', fontSize=16, alignment=TA_CENTER, spaceAfter=10))
+    styles.add(ParagraphStyle(name='MainHeading', fontSize=18, spaceAfter=16, spaceBefore=18, fontName='Helvetica-Bold'))
+    styles.add(ParagraphStyle(name='SubHeading', fontSize=14, spaceAfter=10, spaceBefore=14, fontName='Helvetica-Bold'))
+    styles.add(ParagraphStyle(name='NormalText', fontSize=11.5, leading=16, alignment=TA_LEFT))
+
+    doc = SimpleDocTemplate(
+        buffer,
+        pagesize=letter,
+        rightMargin=40, leftMargin=40,
+        topMargin=60, bottomMargin=40,
+        title=f"Travel Itinerary for {destination or 'Destination'}"
+    )
+
+    elements = []
+
+    # Load logo if exists
+    show_logo = os.path.exists(logo_path)
+
+    # --- Cover Page ---
+    elements.append(Spacer(1, 100))
+    elements.append(Paragraph("Travel Itinerary", styles['CoverTitle']))
+    elements.append(Paragraph(f"Destination: {destination or 'Unknown'}", styles['CoverSubtitle']))
+    elements.append(Paragraph(f"Generated on: {datetime.now().strftime('%B %d, %Y at %I:%M %p')}", styles['CoverSubtitle']))
+    if show_logo:
+        elements.append(Spacer(1, 50))
+        elements.append(Image(logo_path, width=1.5 * inch, height=1.5 * inch, hAlign='CENTER'))
+    elements.append(PageBreak())
+
+    # Insert corner logo on each page except cover
+    def corner_logo():
+        return LogoRightCorner(logo_path) if show_logo else None
+
+    # Line filtering + formatting
+    def is_bare_url(line):
+        return line.startswith("http://") or line.startswith("https://")
+
+    def strip_markdown(text: str) -> str:
+        return re.sub(r'\*\*(.*?)\*\*', r'\1', text)
+
+    major_sections = {"restaurants", "hotels", "rental cars", "weather forecast"}
+
+    def parse_line(line):
+        line = line.strip()
+        if is_bare_url(line):
+            return None
+
+        # Replace markdown links with clickable [Website Link]
+        line = re.sub(r'\[([^\]]+)\]\((https?://[^\)]+)\)', r'<link href="\2"><u>[Website Link]</u></link>', line)
+        line = strip_markdown(line)
+
+        # Major section (force page break + top-right logo)
+        if line.lower().replace(" ", "") in major_sections:
+            elements.append(PageBreak())
+            logo_flow = corner_logo()
+            if logo_flow:
+                elements.append(logo_flow)
+            return Paragraph(line.title(), styles['MainHeading'])
+
+        elif line.startswith("###") or line.startswith("####"):
+            cleaned = re.sub(r"#+", "", line).replace("■", "").strip()
+            return Paragraph(cleaned, styles['SubHeading'])
+
+        elif line.startswith("- "):
+            return Paragraph(line[2:].strip(), styles['NormalText'])
+
+        elif line:
+            return Paragraph(line, styles['NormalText'])
+
+        else:
+            return Spacer(1, 6)
+
+    # Build content
+    for raw_line in itinerary_text.splitlines():
+        element = parse_line(raw_line)
+        if element:
+            elements.append(element)
+            elements.append(Spacer(1, 4))
+
+    doc.build(elements)
+    buffer.seek(0)
+    return buffer.read()
+
 
 # Sidebar
 with st.sidebar:
@@ -44,9 +155,8 @@ st.session_state.setdefault('airport', "")
 st.session_state.setdefault('arrival_time', "")
 
 st.title("AI Travel Planner")
-# st.write("Upload a boarding pass or ticket to generate your itinerary.")
 
-# Upload section (always visible)
+# Upload section
 uploaded = st.file_uploader(
     "Upload your boarding pass or travel ticket (JPG, PNG, JPEG)",
     type=["png", "jpg", "jpeg"],
@@ -56,7 +166,7 @@ uploaded = st.file_uploader(
 if uploaded:
     st.session_state.uploaded = uploaded
 
-# Generate button (always under upload)
+# Generate button
 if not st.session_state.is_generating:
     if st.session_state.uploaded and st.button("Generate Itinerary", use_container_width=True):
         st.session_state.is_generating = True
@@ -88,7 +198,7 @@ else:
         st.session_state.is_generating = False
         st.info("Generation canceled.")
 
-# Show boarding pass image and map side-by-side, once itinerary is generated
+# Show image + map side-by-side
 if st.session_state.uploaded and st.session_state.itinerary:
     col_img, col_map = st.columns([1, 1])
     with col_img:
@@ -104,11 +214,28 @@ if st.session_state.uploaded and st.session_state.itinerary:
             else:
                 st.warning("Could not generate map — check city names.")
 
-# Itinerary directly after row, no extra gap
+# Show itinerary
 if st.session_state.itinerary:
     st.markdown("---")
     st.markdown(format_links(st.session_state.itinerary), unsafe_allow_html=False)
 
+    ### 🆕 PDF download button
+    destination = st.session_state.get("city", "").strip()
+    pdf_bytes = generate_pdf(st.session_state.itinerary, destination, logo_path="assets/logo.png")
+
+
+    safe_destination = re.sub(r'[^\w\- ]+', '', destination).replace(" ", "_").lower()
+    file_name = f"travel_itinerary_{safe_destination or 'destination'}.pdf"
+
+    st.download_button(
+        label="📄 Download Itinerary as PDF",
+        data=pdf_bytes,
+        file_name=file_name,
+        mime="application/pdf"
+    )
+
+
+    # Chat form
     st.subheader("💬 Ask Anything About Your Trip")
     with st.form("chat_form", clear_on_submit=False):
         user_query = st.text_input("e.g. Best hikes nearby?", key="chat_input")
