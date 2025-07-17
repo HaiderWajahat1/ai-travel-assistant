@@ -2,8 +2,6 @@ import streamlit as st
 import requests
 from streamlit_folium import st_folium
 from route import build_basic_route_map
-
-### 🆕 PDF-related imports
 from reportlab.lib.pagesizes import letter
 from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, PageBreak, Image, Flowable
 from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
@@ -134,7 +132,7 @@ with st.sidebar:
         min_value=1, max_value=10, value=3, step=1
     )
     free_prefs = st.text_area(
-        "Preferences (comma-separated)",
+        "Customizations (comma-separated)",
         placeholder="e.g. vegetarian, hiking, skip hotel, have a car",
         height=100
     )

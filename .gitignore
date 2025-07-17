@@ -37,6 +37,7 @@ Thumbs.db
 *.container
 *.pid
 *.tar
+.devcontainer
 
 # Custom files
 requirements-mainpc.txt
